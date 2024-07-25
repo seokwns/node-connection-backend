@@ -1,6 +1,32 @@
 #!/bin/bash
 
+set -e
+
+function setup_hyperledger() {
+    if [ ! -d "./network/bin" ] || [ ! -d "./network/builders" ] || [ ! -d "./network/config" ]; then
+        echo "Required folders not found in ./network/. Proceeding with setup."
+
+        curl -sSLO https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/install-fabric.sh
+        chmod +x install-fabric.sh
+
+        ./install-fabric.sh
+
+        cp -r fabric-samples/bin ./network/
+        cp -r fabric-samples/builders ./network/
+        cp -r fabric-samples/config ./network/
+
+        rm -rf fabric-samples
+        rm -f install-fabric.sh
+
+        echo "Hyperledger Fabric setup complete."
+    else
+        echo "The required folders already exist in ./network/. No actions needed."
+    fi
+}
+
 function start_application() {
+    setup_hyperledger
+
     echo "Starting node-connection network..."
     ./network/node-connection-network/network.sh up -ca
 
