@@ -41,6 +41,8 @@ function setup_hyperledger_indy() {
         docker build -f ci/indy-pool.dockerfile -t indy_pool .
         docker run -itd -p 9701-9708:9701-9708 indy_pool
 
+        cd ..
+
         echo -e "${GREEN}indy-sdk installation and Docker container setup are complete.${NC}"
     else
         echo -e "${RED}The indy-sdk folder already exists. No actions will be performed.${NC}"
