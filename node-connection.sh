@@ -2,7 +2,6 @@
 
 set -e
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -52,8 +51,17 @@ function start_application() {
     echo -e "${YELLOW}Starting node-connection network...${NC}"
     ./network/node-connection-network/network.sh up -ca
     cd indy-sdk
-    docker build -f ci/indy-pool.dockerfile -t indy_pool .
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo -e "${YELLOW}Detected macOS. Building Docker image with platform linux/amd64...${NC}"
+        docker build --platform linux/amd64 -f ci/indy-pool.dockerfile -t indy_pool .
+    else
+        echo -e "${YELLOW}Building Docker image without platform flag...${NC}"
+        docker build -f ci/indy-pool.dockerfile -t indy_pool .
+    fi
+
     docker run -itd --name indy_pool -p 9701-9708:9701-9708 indy_pool
+
     cd ..
 
     # TODO: 백엔드 서버 시작
@@ -62,7 +70,6 @@ function start_application() {
     echo -e "${GREEN}Starting node-connection application complete.${NC}"
 }
 
-# Function to stop the networkw
 function stop_application() {
     echo -e "${YELLOW}Stopping node-connection network...${NC}"
     ./network/node-connection-network/network.sh down
@@ -76,7 +83,6 @@ function stop_application() {
     echo -e "${GREEN}Stopping node-connection application complete.${NC}"
 }
 
-# Check the first argument passed to the script
 if [ "$1" == "start" ]; then
     start_application
   
