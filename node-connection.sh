@@ -31,17 +31,10 @@ function setup_hyperledger_fabric() {
 }
 
 function setup_hyperledger_indy() {
-    if [ ! -d "$HOME/indy-sdk" ]; then
+    if [ ! -d "./indy-sdk" ]; then
         echo -e "${YELLOW}The indy-sdk folder does not exist. Proceeding with cloning.${NC}"
 
         git clone https://github.com/hyperledger/indy-sdk.git
-
-        cd indy-sdk
-
-        docker build -f ci/indy-pool.dockerfile -t indy_pool .
-        docker run -itd -p 9701-9708:9701-9708 indy_pool
-
-        cd ..
 
         echo -e "${GREEN}indy-sdk installation and Docker container setup are complete.${NC}"
     else
@@ -58,6 +51,10 @@ function start_application() {
 
     echo -e "${YELLOW}Starting node-connection network...${NC}"
     ./network/node-connection-network/network.sh up -ca
+    cd indy-sdk
+    docker build -f ci/indy-pool.dockerfile -t indy_pool .
+    docker run -itd --name indy_pool -p 9701-9708:9701-9708 indy_pool
+    cd ..
 
     # TODO: 백엔드 서버 시작
     
@@ -69,6 +66,8 @@ function start_application() {
 function stop_application() {
     echo -e "${YELLOW}Stopping node-connection network...${NC}"
     ./network/node-connection-network/network.sh down
+    docker stop indy_pool
+    docker rm indy_pool
 
     # TODO: 백엔드 서버 중지
 
