@@ -15,25 +15,28 @@ set -o pipefail
 # Where am I?
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-ORDERER_CA=${DIR}/test-network/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem
-PEER0_ORG1_CA=${DIR}/test-network/organizations/peerOrganizations/org1.node.connection/tlsca/tlsca.org1.node.connection-cert.pem
-PEER0_ORG2_CA=${DIR}/test-network/organizations/peerOrganizations/org2.node.connection/tlsca/tlsca.org2.node.connection-cert.pem
-PEER0_ORG3_CA=${DIR}/test-network/organizations/peerOrganizations/org3.node.connection/tlsca/tlsca.org3.node.connection-cert.pem
+echo "${DIR}"
 
+ORDERER_CA=${DIR}/node-connection-network/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem
+PEER0_ORG1_CA=${DIR}/node-connection-network/organizations/peerOrganizations/org1.node.connection/tlsca/tlsca.org1.node.connection-cert.pem
+PEER0_ORG2_CA=${DIR}/node-connection-network/organizations/peerOrganizations/org2.node.connection/tlsca/tlsca.org2.node.connection-cert.pem
+PEER0_ORG3_CA=${DIR}/node-connection-network/organizations/peerOrganizations/org3.node.connection/tlsca/tlsca.org3.node.connection-cert.pem
 
-if [[ ${ORG,,} == "org1" || ${ORG,,} == "digibank" ]]; then
+ORG_LOWER=$(echo "${ORG}" | tr '[:upper:]' '[:lower:]')
+
+if [[ ${ORG_LOWER} == "org1" || ${ORG_LOWER} == "digibank" ]]; then
 
    CORE_PEER_LOCALMSPID=Org1MSP
-   CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/org1.node.connection/users/Admin@org1.node.connection/msp
+   CORE_PEER_MSPCONFIGPATH=${DIR}/node-connection-network/organizations/peerOrganizations/org1.node.connection/users/Admin@org1.node.connection/msp
    CORE_PEER_ADDRESS=localhost:7051
-   CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/org1.node.connection/tlsca/tlsca.org1.node.connection-cert.pem
+   CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/node-connection-network/organizations/peerOrganizations/org1.node.connection/tlsca/tlsca.org1.node.connection-cert.pem
 
-elif [[ ${ORG,,} == "org2" || ${ORG,,} == "magnetocorp" ]]; then
+if [[ ${ORG_LOWER} == "org2" || ${ORG_LOWER} == "digibank" ]]; then
 
    CORE_PEER_LOCALMSPID=Org2MSP
-   CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/org2.node.connection/users/Admin@org2.node.connection/msp
+   CORE_PEER_MSPCONFIGPATH=${DIR}/node-connection-network/organizations/peerOrganizations/org2.node.connection/users/Admin@org2.node.connection/msp
    CORE_PEER_ADDRESS=localhost:9051
-   CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/org2.node.connection/tlsca/tlsca.org2.node.connection-cert.pem
+   CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/node-connection-network/organizations/peerOrganizations/org2.node.connection/tlsca/tlsca.org2.node.connection-cert.pem
 
 else
    echo "Unknown \"$ORG\", please choose Org1/Digibank or Org2/Magnetocorp"

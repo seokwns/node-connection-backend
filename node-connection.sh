@@ -49,20 +49,18 @@ function start_application() {
     setup_hyperledger_indy
 
     echo -e "${YELLOW}Starting node-connection network...${NC}"
-    ./network/node-connection-network/network.sh up -ca
-    cd indy-sdk
+    ./node-connection-network.sh up
 
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo -e "${YELLOW}Detected macOS. Building Docker image with platform linux/amd64...${NC}"
-        docker build --platform linux/amd64 -f ci/indy-pool.dockerfile -t indy_pool .
-    else
-        echo -e "${YELLOW}Building Docker image without platform flag...${NC}"
-        docker build -f ci/indy-pool.dockerfile -t indy_pool .
-    fi
+    echo -e "${YELLOW}Config node-connection network...${NC}"
+    cd ./network/node-connection-network
+    export PATH=$PATH:$(realpath ../bin)
+    export FABRIC_CFG_PATH=$(realpath ../config)
+    export $(./setOrgEnv.sh Org1 | xargs)
+    export $(./setOrgEnv.sh Org2 | xargs)
+    cd ../..
 
-    docker run -itd --name indy_pool -p 9701-9708:9701-9708 indy_pool
-
-    cd ..
+    echo -e "${YELLOW}Create default channel...${NC}"
+    ./network/node-connection-network/network.sh createChannel -c nodeconnectionchannel
 
     # TODO: 백엔드 서버 시작
     
@@ -72,9 +70,7 @@ function start_application() {
 
 function stop_application() {
     echo -e "${YELLOW}Stopping node-connection network...${NC}"
-    ./network/node-connection-network/network.sh down
-    docker stop indy_pool
-    docker rm indy_pool
+    ./node-connection-network.sh down
 
     # TODO: 백엔드 서버 중지
 
