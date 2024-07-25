@@ -22,16 +22,14 @@ PEER0_ORG1_CA=${DIR}/node-connection-network/organizations/peerOrganizations/org
 PEER0_ORG2_CA=${DIR}/node-connection-network/organizations/peerOrganizations/org2.node.connection/tlsca/tlsca.org2.node.connection-cert.pem
 PEER0_ORG3_CA=${DIR}/node-connection-network/organizations/peerOrganizations/org3.node.connection/tlsca/tlsca.org3.node.connection-cert.pem
 
-ORG_LOWER=$(echo "${ORG}" | tr '[:upper:]' '[:lower:]')
-
-if [[ ${ORG_LOWER} == "org1" || ${ORG_LOWER} == "digibank" ]]; then
+if [[ ${ORG,,} == "org1" || ${ORG,,} == "digibank" ]]; then
 
    CORE_PEER_LOCALMSPID=Org1MSP
    CORE_PEER_MSPCONFIGPATH=${DIR}/node-connection-network/organizations/peerOrganizations/org1.node.connection/users/Admin@org1.node.connection/msp
    CORE_PEER_ADDRESS=localhost:7051
    CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/node-connection-network/organizations/peerOrganizations/org1.node.connection/tlsca/tlsca.org1.node.connection-cert.pem
 
-if [[ ${ORG_LOWER} == "org2" || ${ORG_LOWER} == "digibank" ]]; then
+elif [[ ${ORG,,} == "org2" || ${ORG,,} == "magnetocorp" ]]; then
 
    CORE_PEER_LOCALMSPID=Org2MSP
    CORE_PEER_MSPCONFIGPATH=${DIR}/node-connection-network/organizations/peerOrganizations/org2.node.connection/users/Admin@org2.node.connection/msp

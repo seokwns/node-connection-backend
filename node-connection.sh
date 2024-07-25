@@ -55,8 +55,20 @@ function start_application() {
     cd ./network/node-connection-network
     export PATH=$PATH:$(realpath ../bin)
     export FABRIC_CFG_PATH=$(realpath ../config)
-    export $(./setOrgEnv.sh Org1 | xargs)
-    export $(./setOrgEnv.sh Org2 | xargs)
+    ./setOrgEnv.sh Org1 | while IFS= read -r line; do
+        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+            var_name=${BASH_REMATCH[1]}
+            var_value=${BASH_REMATCH[2]}
+            export $var_name="$var_value"
+        fi
+    done
+    ./setOrgEnv.sh Org2 | while IFS= read -r line; do
+        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+            var_name=${BASH_REMATCH[1]}
+            var_value=${BASH_REMATCH[2]}
+            export $var_name="$var_value"
+        fi
+    done
     cd ../..
 
     echo -e "${YELLOW}Create default channel...${NC}"
