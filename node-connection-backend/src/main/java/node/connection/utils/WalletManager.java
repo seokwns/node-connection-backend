@@ -50,46 +50,51 @@ public class WalletManager {
     }
 
     public Wallet createUserWallet(String phoneNumber, String password) {
-        log.info("일반 유저 지갑 생성 시작 | " + phoneNumber);
         String userConfig = createUserWalletConfig(phoneNumber);
-        String credential = createWalletCredential(password);
-
-        Wallet wallet;
-        try {
-            Wallet.createWallet(userConfig, credential).get();
-            wallet = Wallet.openWallet(userConfig, credential).get();
-        } catch (InterruptedException | ExecutionException | IndyException exception) {
-            throw new ServerException(ExceptionStatus.WALLET_CREATION_ERROR);
-        }
+        Wallet wallet = createWallet(userConfig, password);
 
         log.info("일반 유저 지갑 생성 완료 | " + phoneNumber);
         return wallet;
     }
 
     public Wallet createCourtWallet(String court, String department, String location, String password) {
-        log.info("등기소 지갑 생성 시작 | " + court + " | " + department + " | " + location);
         String courtConfig = createCourtWalletConfig(court, department, location);
-        String credential = createWalletCredential(password);
-
-        Wallet wallet;
-        try {
-            Wallet.createWallet(courtConfig, credential).get();
-            wallet = Wallet.openWallet(courtConfig, credential).get();
-        } catch (InterruptedException | ExecutionException | IndyException e) {
-            throw new ServerException(ExceptionStatus.WALLET_CREATION_ERROR);
-        }
+        Wallet wallet = createWallet(courtConfig, password);
 
         log.info("등기소 지갑 생성 완료 | " + court + " | " + department + " | " + location);
         return wallet;
     }
 
-    public Wallet openUserWallet(String phoneNumber, String password) {
-        String userConfig = createUserWalletConfig(phoneNumber);
+    private Wallet createWallet(String config, String password) {
         String credential = createWalletCredential(password);
 
         try {
-            return Wallet.openWallet(userConfig, credential).get();
+            Wallet.createWallet(config, credential).get();
+            return Wallet.openWallet(config, credential).get();
         } catch (InterruptedException | ExecutionException | IndyException e) {
+            e.printStackTrace();
+            throw new ServerException(ExceptionStatus.WALLET_CREATION_ERROR);
+        }
+    }
+
+    public Wallet openUserWallet(String phoneNumber, String password) {
+        String config = createUserWalletConfig(phoneNumber);
+        return this.openWallet(config, password);
+    }
+
+    public Wallet openCourtWallet(String court, String department, String location, String password) {
+        String config = createCourtWalletConfig(court, department, location);
+        return this.openWallet(config, password);
+    }
+
+    private Wallet openWallet(String config, String password) {
+        String credential = createWalletCredential(password);
+
+        try {
+            Wallet wallet = Wallet.openWallet(config, credential).get();
+            log.info("지갑 오픈 완료 | " + config);
+        } catch (InterruptedException | ExecutionException | IndyException e) {
+            e.printStackTrace();
             throw new ServerException(ExceptionStatus.WALLET_OPEN_ERROR);
         }
     }

@@ -6,10 +6,7 @@ import node.connection.service.WalletService;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/wallet")
@@ -21,8 +18,17 @@ public class WalletController {
     }
 
     @PostMapping("/user")
-    public ResponseEntity<?> createUserWallet(@RequestBody UserWalletCreateRequest walletCreateRequest) {
-        Wallet wallet = walletService.createUserWallet(walletCreateRequest);
+    public ResponseEntity<?> createAndOpenUserWallet(@RequestBody UserWalletCreateRequest walletCreateRequest) {
+        Wallet wallet = walletService.createAndOpenUserWallet(walletCreateRequest);
+        return ResponseEntity.ok().body(Response.success(wallet));
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<?> getUserWallet(
+            @RequestParam("phoneNumber") String phoneNumber,
+            @RequestParam("password") String password
+    ) {
+        Wallet wallet = walletService.openUserWallet(phoneNumber, password);
         return ResponseEntity.ok().body(Response.success(wallet));
     }
 }

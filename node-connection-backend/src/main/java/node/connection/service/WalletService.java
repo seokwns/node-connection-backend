@@ -15,10 +15,14 @@ public class WalletService {
         this.walletManager = walletManager;
     }
 
-    public Wallet createUserWallet(UserWalletCreateRequest request) {
+    public Wallet createAndOpenUserWallet(UserWalletCreateRequest request) {
         String phoneNumber = request.phoneNumber();
         String password = request.password();
 
         return walletManager.createUserWallet(phoneNumber, password);
+    }
+
+    public Wallet openUserWallet(String phoneNumber, String password) {
+        return walletManager.openUserWallet(phoneNumber, password);
     }
 }
