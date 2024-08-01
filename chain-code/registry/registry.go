@@ -7,7 +7,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -71,7 +70,7 @@ type SecondSection struct {
 
 // 부동산 등기부등본 (Registry Document)
 type RegistryDocument struct {
-	ID                       float64                  `json:"id"`                       // 등기부등본 ID
+	ID                       string                  `json:"id"`                       // 등기부등본 ID
 	TitleSection             TitleSection             `json:"titleSection"`             // 표제부
 	ExclusivePartDescription ExclusivePartDescription `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
 	FirstSection             FirstSection             `json:"firstSection"`             // 갑구
@@ -79,7 +78,9 @@ type RegistryDocument struct {
 }
 
 // fabric 초기화
-func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {}
+func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
+	return nil
+}
 
 // 등기부등본 생성
 func (s *SmartContract) CreateRegistryDocument(ctx contractapi.TransactionContextInterface, document RegistryDocument) error {
