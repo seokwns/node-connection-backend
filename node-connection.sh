@@ -2,10 +2,10 @@
 
 set -e
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 function setup_hyperledger_fabric() {
@@ -26,7 +26,7 @@ function setup_hyperledger_fabric() {
 
         echo -e "${GREEN}Hyperledger Fabric setup complete.${NC}"
     else
-        echo -e "${RED}The required folders already exist in ./network/. No actions needed.${NC}"
+        echo -e "${BLUE}The required folders already exist in ./network/. No actions needed.${NC}"
     fi
 }
 
@@ -38,8 +38,29 @@ function setup_hyperledger_indy() {
 
         echo -e "${GREEN}indy-sdk installation and Docker container setup are complete.${NC}"
     else
-        echo -e "${RED}The indy-sdk folder already exists. No actions will be performed.${NC}"
+        echo -e "${BLUE}The indy-sdk folder already exists. No actions will be performed.${NC}"
     fi
+}
+
+function config_org_env() {
+    cd ./network/node-connection-network
+    export PATH=$PATH:$(realpath ../bin)
+    export FABRIC_CFG_PATH=$(realpath ../config)
+    ./setOrgEnv.sh Org1 | while IFS= read -r line; do
+        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+            var_name=${BASH_REMATCH[1]}
+            var_value=${BASH_REMATCH[2]}
+            export $var_name="$var_value"
+        fi
+    done
+    ./setOrgEnv.sh Org2 | while IFS= read -r line; do
+        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+            var_name=${BASH_REMATCH[1]}
+            var_value=${BASH_REMATCH[2]}
+            export $var_name="$var_value"
+        fi
+    done
+    cd ../..
 }
 
 function start_application() {
@@ -50,11 +71,13 @@ function start_application() {
     setup_hyperledger_indy
 
     echo -e "${YELLOW}Starting node-connection network...${NC}"
-    ./network/node-connection-network/network.sh up -ca
-    cd indy-sdk
-    docker build -f ci/indy-pool.dockerfile -t indy_pool .
-    docker run -itd --name indy_pool -p 9701-9708:9701-9708 indy_pool
-    cd ..
+    ./node-connection-network.sh up
+
+    echo -e "${YELLOW}Config node-connection network...${NC}"
+    config_org_env
+
+    echo -e "${YELLOW}Create default channel...${NC}"
+    ./network/node-connection-network/network.sh createChannel -c nodeconnectionchannel
 
     # TODO: 백엔드 서버 시작
     
@@ -62,12 +85,9 @@ function start_application() {
     echo -e "${GREEN}Starting node-connection application complete.${NC}"
 }
 
-# Function to stop the networkw
 function stop_application() {
     echo -e "${YELLOW}Stopping node-connection network...${NC}"
-    ./network/node-connection-network/network.sh down
-    docker stop indy_pool
-    docker rm indy_pool
+    ./node-connection-network.sh down
 
     # TODO: 백엔드 서버 중지
 
@@ -76,7 +96,6 @@ function stop_application() {
     echo -e "${GREEN}Stopping node-connection application complete.${NC}"
 }
 
-# Check the first argument passed to the script
 if [ "$1" == "start" ]; then
     start_application
   
