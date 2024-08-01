@@ -17,8 +17,8 @@ type SmartContract struct {
 
 // 표제부 (Title Section)
 type TitleSection struct {
-	BuildingDescription      BuildingDescription      `json:"buildingDescription"`      // 건물의 표시
-	LandDescription          LandDescription          `json:"landDescription"`          // 대지권의 목적인 토지의 표시
+	BuildingDescription      []BuildingDescription      `json:"buildingDescription"`      // 건물의 표시
+	LandDescription          []LandDescription          `json:"landDescription"`          // 대지권의 목적인 토지의 표시
 }
 
 type BuildingDescription struct {
@@ -39,8 +39,8 @@ type LandDescription struct {
 
 // 전유부분의 건물의 표시 (Exclusive Part of the Building)
 type ExclusivePartDescription struct {
-	BuildingDescription      BuildingDescription      `json:"buildingDescription"`      // 전유부분의 건물의 표시
-	LandRightDescription     LandRightDescription     `json:"landRightDescription"`     // 대지권의 표시
+	BuildingDescription      []BuildingDescription      `json:"buildingDescription"`      // 전유부분의 건물의 표시
+	LandRightDescription     []LandRightDescription     `json:"landRightDescription"`     // 대지권의 표시
 }
 
 type LandRightDescription struct {
@@ -70,11 +70,11 @@ type SecondSection struct {
 
 // 부동산 등기부등본 (Registry Document)
 type RegistryDocument struct {
-	ID                       string                  `json:"id"`                       // 등기부등본 ID
-	TitleSection             TitleSection             `json:"titleSection"`             // 표제부
-	ExclusivePartDescription ExclusivePartDescription `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
-	FirstSection             FirstSection             `json:"firstSection"`             // 갑구
-	SecondSection            SecondSection            `json:"secondSection"`            // 을구
+	ID                       string                     `json:"id"`                       // 등기부등본 ID
+	TitleSection             []TitleSection             `json:"titleSection"`             // 표제부
+	ExclusivePartDescription []ExclusivePartDescription `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
+	FirstSection             []FirstSection             `json:"firstSection"`             // 갑구
+	SecondSection            []SecondSection            `json:"secondSection"`            // 을구
 }
 
 // fabric 초기화
