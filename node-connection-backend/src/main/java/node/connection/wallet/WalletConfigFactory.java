@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class WalletConfigBuilder {
+public class WalletConfigFactory {
 
     @Value("${hyperledger.indy.wallet.user-wallet-storage}")
     private String userWalletStorage;
@@ -13,7 +13,7 @@ public class WalletConfigBuilder {
     @Value(("${hyperledger.indy.wallet.court-wallet-storage}"))
     private String courtWalletStorage;
 
-    public WalletConfigBuilder() {}
+    public WalletConfigFactory() {}
 
     public String getUserWalletConfig(String phoneNumber) {
         JSONObject storageConfig = new JSONObject().put("path", this.userWalletStorage);
