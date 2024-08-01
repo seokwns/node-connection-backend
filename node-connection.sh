@@ -9,6 +9,17 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 function setup_requirements() {
+    # Determine the shell type
+    SHELL_PROFILE=""
+    if [ -n "$BASH_VERSION" ]; then
+        SHELL_PROFILE="$HOME/.bashrc"
+    elif [ -n "$ZSH_VERSION" ]; then
+        SHELL_PROFILE="$HOME/.zshrc"
+    else
+        echo -e "${RED}Unsupported shell. Please use bash or zsh.${NC}"
+        return 1
+    fi
+
     # Check if Go is installed
     if ! command -v go &> /dev/null
     then
@@ -16,8 +27,10 @@ function setup_requirements() {
         wget https://golang.org/dl/go1.19.1.linux-amd64.tar.gz
         sudo tar -xzf go1.19.1.linux-amd64.tar.gz -C /usr/local/
         # Set up Go environment variables
-        echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.bashrc
-        source ~/.bashrc
+        if ! grep -q "export PATH=\$PATH:/usr/local/go/bin" "$SHELL_PROFILE"; then
+            echo "export PATH=\$PATH:/usr/local/go/bin" >> "$SHELL_PROFILE"
+            source "$SHELL_PROFILE"
+        fi
         echo -e "${GREEN}Go has been installed successfully.${NC}"
     else
         echo -e "${GREEN}Go is already installed.${NC}"
