@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class WalletManager {
+public class IndyManager {
 
     private final Pool pool;
     private final WalletConfigFactory walletConfigFactory;
     private final IndyUtils indyUtils;
 
-    public WalletManager(
+    public IndyManager(
             @Autowired WalletConfigFactory walletConfigFactory,
             @Autowired IndyUtils indyUtils
     ) throws Exception {
