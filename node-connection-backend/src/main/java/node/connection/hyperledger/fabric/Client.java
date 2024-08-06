@@ -9,10 +9,8 @@ import lombok.*;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.server.ServerException;
 import node.connection.hyperledger.fabric.ca.CAEnrollment;
-import node.connection.hyperledger.utils.FileUtils;
+import node.connection.hyperledger.fabric.util.FileUtils;
 import org.hyperledger.fabric.sdk.User;
-import org.hyperledger.fabric.sdk.identity.Identity;
-import org.hyperledger.fabric.sdk.identity.X509Identity;
 
 import java.io.IOException;
 import java.util.Set;

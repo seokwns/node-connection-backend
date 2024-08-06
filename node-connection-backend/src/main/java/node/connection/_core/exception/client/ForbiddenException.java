@@ -28,7 +28,7 @@ public class ForbiddenException extends RuntimeException implements CustomExcept
     }
 
     @Override
-    public int code() {
+    public String code() {
         return exception.getCode();
     }
 }

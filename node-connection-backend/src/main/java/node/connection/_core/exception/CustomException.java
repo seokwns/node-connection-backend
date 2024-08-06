@@ -6,5 +6,5 @@ import org.springframework.http.HttpStatus;
 public interface CustomException {
     ResponseData<?> body();
     HttpStatus status();
-    int code();
+    String code();
 }

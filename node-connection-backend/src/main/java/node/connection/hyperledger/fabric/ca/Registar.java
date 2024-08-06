@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import node.connection.hyperledger.utils.FileUtils;
+import node.connection.hyperledger.fabric.util.FileUtils;
 import org.hyperledger.fabric.sdk.User;
 
 import java.io.IOException;

@@ -28,7 +28,7 @@ public class ServerException extends RuntimeException implements CustomException
     }
 
     @Override
-    public int code() {
+    public String code() {
         return exception.getCode();
     }
 }
