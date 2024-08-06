@@ -11,9 +11,9 @@ import node.connection._core.exception.server.ServerException;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.msp.Identities;
 import org.hyperledger.fabric.protos.peer.Chaincode;
-import org.hyperledger.fabric.protos.peer.ProposalPackage;
-import org.hyperledger.fabric.protos.peer.ProposalResponsePackage;
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
+import org.hyperledger.fabric.protos.peer.FabricProposal;
+import org.hyperledger.fabric.protos.peer.FabricProposalResponse;
+import org.hyperledger.fabric.protos.peer.FabricTransaction;
 import org.hyperledger.fabric.sdk.TransactionInfo;
 
 import java.util.ArrayList;
@@ -33,20 +33,19 @@ public class FabricPayload {
     private List<String> chaincodeInputArgs;
     private String proposalResponsePayload;
 
-    public static FabricPayload of(TransactionPackage.TransactionAction action) {
+    public static FabricPayload of(FabricTransaction.TransactionAction action) {
         try {
-            TransactionPackage.ChaincodeActionPayload chaincodeActionPayload = TransactionPackage.ChaincodeActionPayload.parseFrom(action.getPayload());
-            TransactionPackage.ChaincodeEndorsedAction endorsedAction = chaincodeActionPayload.getAction();
-            ProposalResponsePackage.ProposalResponsePayload proposalResponsePayload = ProposalResponsePackage.ProposalResponsePayload.parseFrom(endorsedAction.getProposalResponsePayload());
-            ProposalPackage.ChaincodeAction chaincodeAction = ProposalPackage.ChaincodeAction.parseFrom(proposalResponsePayload.getExtension());
+            FabricTransaction.ChaincodeActionPayload chaincodeActionPayload = FabricTransaction.ChaincodeActionPayload.parseFrom(action.getPayload());
+            FabricTransaction.ChaincodeEndorsedAction endorsedAction = chaincodeActionPayload.getAction();
+            FabricProposalResponse.ProposalResponsePayload proposalResponsePayload = FabricProposalResponse.ProposalResponsePayload.parseFrom(endorsedAction.getProposalResponsePayload());
+            FabricProposal.ChaincodeAction chaincodeAction = FabricProposal.ChaincodeAction.parseFrom(proposalResponsePayload.getExtension());
             Chaincode.ChaincodeID chaincodeID = chaincodeAction.getChaincodeId();
 
-            ProposalPackage.ChaincodeProposalPayload proposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(chaincodeActionPayload.getChaincodeProposalPayload());
+            FabricProposal.ChaincodeProposalPayload proposalPayload = FabricProposal.ChaincodeProposalPayload.parseFrom(chaincodeActionPayload.getChaincodeProposalPayload());
             Chaincode.ChaincodeInvocationSpec chaincodeInvocation = Chaincode.ChaincodeInvocationSpec.parseFrom(proposalPayload.getInput());
             Chaincode.ChaincodeInput chaincodeInput = chaincodeInvocation.getChaincodeSpec().getInput();
             String fcn = null;
             List<String> chaincodeInputArgs = new ArrayList<>();
-
             for (int i = 0; i < chaincodeInput.getArgsCount(); i++) {
                 if (i == 0) {
                     fcn = chaincodeInput.getArgs(i).toStringUtf8();
@@ -56,7 +55,7 @@ public class FabricPayload {
             }
 
             List<String> endorsers = new ArrayList<>();
-            List<ProposalResponsePackage.Endorsement> endorsements = endorsedAction.getEndorsementsList();
+            List<FabricProposalResponse.Endorsement> endorsements = endorsedAction.getEndorsementsList();
             for (int e = 0; e < endorsedAction.getEndorsementsCount(); e++) {
                 Identities.SerializedIdentity endorser = Identities.SerializedIdentity.parseFrom(endorsements.get(e).getEndorser());
                 endorsers.add(endorser.getMspid());
@@ -86,8 +85,8 @@ public class FabricPayload {
     public static List<FabricPayload> parseFrom(TransactionInfo info) {
         try {
             Common.Payload payload = Common.Payload.parseFrom(info.getEnvelope().getPayload());
-            TransactionPackage.Transaction transaction = TransactionPackage.Transaction.parseFrom(payload.getData());
-            List<TransactionPackage.TransactionAction> actions = transaction.getActionsList();
+            FabricTransaction.Transaction transaction = FabricTransaction.Transaction.parseFrom(payload.getData());
+            List<FabricTransaction.TransactionAction> actions = transaction.getActionsList();
 
             List<FabricPayload> payloads = new ArrayList<>();
             for (int i = 0; i < transaction.getActionsCount(); i++) {
