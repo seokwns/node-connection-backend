@@ -2,7 +2,7 @@ package node.connection.service;
 
 import node.connection.dto.wallet.CourtWalletCreateRequest;
 import node.connection.dto.wallet.UserWalletCreateRequest;
-import node.connection.hyperledger.IndyManager;
+import node.connection.hyperledger.indy.IndyConnector;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,20 +10,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class WalletService {
 
-    private final IndyManager indyManager;
+    private final IndyConnector indyConnector;
 
-    public WalletService(@Autowired IndyManager indyManager) {
-        this.indyManager = indyManager;
+    public WalletService(@Autowired IndyConnector indyConnector) {
+        this.indyConnector = indyConnector;
     }
 
     public void createUserWallet(UserWalletCreateRequest request) {
         String phoneNumber = request.phoneNumber();
         String password = request.password();
-        indyManager.createUserWallet(phoneNumber, password);
+        indyConnector.createUserWallet(phoneNumber, password);
     }
 
     public Wallet openUserWallet(String phoneNumber, String password) {
-        return indyManager.openUserWallet(phoneNumber, password);
+        return indyConnector.openUserWallet(phoneNumber, password);
     }
 
     public void createCourtWallet(CourtWalletCreateRequest request) {
@@ -31,10 +31,10 @@ public class WalletService {
         String department = request.department();
         String location = request.location();
         String password = request.password();
-        indyManager.createCourtWallet(court, department, location, password);
+        indyConnector.createCourtWallet(court, department, location, password);
     }
 
     public Wallet openCourtWallet(String court, String department, String location, String password) {
-        return indyManager.openCourtWallet(court, department, location, password);
+        return indyConnector.openCourtWallet(court, department, location, password);
     }
 }
