@@ -16,7 +16,7 @@ package node.connection.hyperledger.fabric.util;
 
 
 import ch.qos.logback.core.util.FileUtil;
-import com.github.amuyu.fabric.ca.NEnrollment;
+import node.connection.hyperledger.fabric.ca.CAEnrollment;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.hyperledger.fabric.sdk.exception.CryptoException;
@@ -50,7 +50,7 @@ public class MspUtils {
      * @throws InvalidKeySpecException
      * @throws CryptoException
      */
-    public static NEnrollment getEnrollment(String keyFolderPath, String keyFileName, String certFolderPath, String certFileName)
+    public static CAEnrollment getEnrollment(String keyFolderPath, String keyFileName, String certFolderPath, String certFileName)
             throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         PrivateKey key;
         String certificate;
@@ -74,7 +74,7 @@ public class MspUtils {
             key = kf.generatePrivate(keySpec);
         }
 
-        return NEnrollment.builder()
+        return CAEnrollment.builder()
                 .key(key)
                 .cert(certificate)
                 .build();
