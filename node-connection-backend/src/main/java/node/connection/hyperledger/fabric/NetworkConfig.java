@@ -93,7 +93,7 @@ public class NetworkConfig {
                 throw new IllegalArgumentException("channelName is null");
             }
             if (peers == null || peers.isEmpty()) {
-                throw new IllegalArgumentException("peer is null");
+                throw new IllegalArgumentException("peers are null or empty");
             }
             if (orderer == null) {
                 throw new IllegalArgumentException("orderer is null");
@@ -108,20 +108,20 @@ public class NetworkConfig {
         }
 
         public Properties baseProperties(Properties properties) {
-            properties.put("grpc.NettyChannelBuilderOption.keepAliveTime", new Object[]{1L, TimeUnit.MINUTES});
-            properties.put("grpc.NettyChannelBuilderOption.keepAliveTimeout", new Object[]{30L, TimeUnit.SECONDS});
-            properties.put("grpc.NettyChannelBuilderOption.keepAliveWithoutCalls", new Object[]{true});
+            properties.put("grpc.keepAliveTime", new Object[]{1L, TimeUnit.MINUTES});
+            properties.put("grpc.keepAliveTimeout", new Object[]{30L, TimeUnit.SECONDS});
+            properties.put("grpc.keepAliveWithoutCalls", new Object[]{true});
             return properties;
         }
 
         public void peerProperties(Properties properties) {
             Properties peerProperties = baseProperties(properties);
-            peerProperties.put("grpc.NettyChannelBuilderOption.maxInboundMessageSize", 20000000);
+            peerProperties.put("grpc.maxInboundMessageSize", 20000000);
         }
 
         public void ordererProperties(Properties properties) {
-            Properties peerProperties = baseProperties(properties);
-            peerProperties.put("ordererWaitTimeMilliSecs", "90000");
+            Properties ordererProperties = baseProperties(properties);
+            ordererProperties.put("ordererWaitTimeMilliSecs", "90000");
         }
     }
 }

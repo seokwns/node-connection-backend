@@ -74,17 +74,22 @@ public class Client implements User {
         }
     }
 
-    public static Client fromFile(String path) throws IOException {
+    public static Client fromFile(String path) {
         String json = FileUtils.read(path);
         return fromJson(json);
     }
 
-    public static Client fromJson(String json) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Client.class, new Deserializer());
-        mapper.registerModule(module);
-        return mapper.readValue(json, Client.class);
+    public static Client fromJson(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(Client.class, new Deserializer());
+            mapper.registerModule(module);
+            return mapper.readValue(json, Client.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new ServerException(ExceptionStatus.JSON_PROCESSING_EXCEPTION);
+        }
     }
 
     public static class Serializer extends JsonSerializer<Client> {

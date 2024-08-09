@@ -14,6 +14,7 @@ public enum ExceptionStatus {
     OBJECT_SERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1002", ""),
     OBJECT_DESERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1003", ""),
     JSON_PROCESSING_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1004", "JSON 파싱 에러 발생"),
+    FILE_IO_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1005", "파일 입출력 과정에서 에러가 발생했습니다."),
 
     INDY_INITIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2000", "Indy 초기화 중 에러가 발생했습니다."),
     WALLET_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2001", "지갑 생성 중 에러가 발생했습니다."),

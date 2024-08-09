@@ -19,19 +19,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
-public class FabricService {
+public class FabricConnector {
 
     private HFClient hfClient;
     private Channel curChannel;
     private ChaincodeID chaincodeID;
-    private ChannelManager channelManager;
+    private final ChannelManager channelManager;
 
-    public FabricService(Client client) {
+    public FabricConnector(Client client) {
         hfClient = createHFClient(client);
         channelManager = new ChannelManager();
     }
 
-    public FabricService(NetworkConfig networkConfig, Client client) {
+    public FabricConnector(NetworkConfig networkConfig, Client client) {
         hfClient = createHFClient(client);
         channelManager = new ChannelManager();
         connectToChannel(networkConfig);
@@ -50,11 +50,10 @@ public class FabricService {
     public Channel connectToChannel(NetworkConfig networkConfig, String channelName) {
         Channel channel = channelManager.get(channelName);
         if (channel == null) {
-            try {
-                channel = hfClient.getChannel(channelName);
-            } catch (NullPointerException e) {
-            }
+            log.debug("{} 채널에 연결 시도", channelName);
+            channel = hfClient.getChannel(channelName);
             if (channel == null) {
+                log.debug("{} 채널 연결 실패, 채널 생성", channelName);
                 channel = createChannel(networkConfig, channelName);
             }
             channelManager.put(channel);
@@ -89,8 +88,13 @@ public class FabricService {
                 channel.addPeer(hfClient.newPeer(peer.getName(), peer.getUrl(), peer.getProperties()));
             }
 
-            channel.addOrderer(hfClient.newOrderer(networkConfig.getOrderer().getName(),
-                    networkConfig.getOrderer().getUrl(), networkConfig.getOrderer().getProperties()));
+            channel.addOrderer(
+                    hfClient.newOrderer(
+                            networkConfig.getOrderer().getName(),
+                            networkConfig.getOrderer().getUrl(),
+                            networkConfig.getOrderer().getProperties()
+                    )
+            );
 
             if (networkConfig.getNode() != null) {
                 channel.addPeer(

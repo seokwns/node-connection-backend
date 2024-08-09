@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import node.connection._core.exception.ExceptionStatus;
+import node.connection._core.exception.server.ServerException;
 import node.connection.hyperledger.fabric.util.FileUtils;
 import org.hyperledger.fabric.sdk.User;
 
@@ -18,7 +20,7 @@ import java.util.Set;
 @Builder
 @Getter
 @Setter
-public class Registar implements User {
+public class Registrar implements User {
     private String name;
     private CAEnrollment enrollment;
 
@@ -42,34 +44,44 @@ public class Registar implements User {
         return null;
     }
 
-    public void writeToFile(String path) throws IOException {
+    public void writeToFile(String path) {
         FileUtils.write(path, toJson());
     }
 
-    public static Registar fromFile(String path) throws IOException {
+    public static Registrar fromFile(String path) {
         String json = FileUtils.read(path);
         return fromJson(json);
     }
 
-    public String toJson() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addSerializer(Registar.class, new Serializer());
-        mapper.registerModule(module);
-        return mapper.writeValueAsString(this);
+    public String toJson() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addSerializer(Registrar.class, new Serializer());
+            mapper.registerModule(module);
+            return mapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new ServerException(ExceptionStatus.JSON_PROCESSING_EXCEPTION);
+        }
     }
 
-    public static Registar fromJson(String json) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Registar.class, new Deserializer());
-        mapper.registerModule(module);
-        return mapper.readValue(json, Registar.class);
+    public static Registrar fromJson(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(Registrar.class, new Deserializer());
+            mapper.registerModule(module);
+            return mapper.readValue(json, Registrar.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new ServerException(ExceptionStatus.JSON_PROCESSING_EXCEPTION);
+        }
     }
 
-    public static class Serializer extends JsonSerializer<Registar> {
+    public static class Serializer extends JsonSerializer<Registrar> {
         @Override
-        public void serialize(Registar value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        public void serialize(Registrar value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("name", value.getName());
             gen.writeStringField("enrollment", value.getEnrollment().serialize());
@@ -77,15 +89,15 @@ public class Registar implements User {
         }
     }
 
-    public static class Deserializer extends JsonDeserializer<Registar> {
+    public static class Deserializer extends JsonDeserializer<Registrar> {
         @Override
-        public Registar deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
+        public Registrar deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
             JsonNode node = parser.readValueAsTree();
             String name = node.get("name").asText();
             String en = node.get("enrollment").asText();
             try {
                 CAEnrollment enrollment = CAEnrollment.deserialize(en);
-                return Registar.builder()
+                return Registrar.builder()
                         .name(name)
                         .enrollment(enrollment)
                         .build();
@@ -98,9 +110,9 @@ public class Registar implements User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Registar registar)) return false;
-        return Objects.equals(name, registar.name) &&
-                Objects.equals(enrollment, registar.enrollment);
+        if (!(o instanceof Registrar registrar)) return false;
+        return Objects.equals(name, registrar.name) &&
+                Objects.equals(enrollment, registrar.enrollment);
     }
 
     @Override

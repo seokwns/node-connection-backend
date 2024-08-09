@@ -20,11 +20,11 @@ import java.net.MalformedURLException;
 import java.util.Properties;
 
 @Slf4j
-public class FabricCAService {
+public class FabricCAConnector {
 
-    private HFCAClient caClient;
+    private final HFCAClient caClient;
 
-    public FabricCAService(CAInfo caInfo) {
+    public FabricCAConnector(CAInfo caInfo) {
         Properties properties = new Properties();
         if (caInfo.isAllowAllHostNames()) {
             properties.put("allowAllHostNames", "true");
@@ -64,10 +64,10 @@ public class FabricCAService {
         }
     }
 
-    public Registar registarEnroll(CAUser enrollment) {
+    public Registrar registrarEnroll(CAUser enrollment) {
         try {
             Enrollment e = caClient.enroll(enrollment.getName(), enrollment.getSecret());
-            return Registar.builder()
+            return Registrar.builder()
                     .name(enrollment.getName())
                     .enrollment(CAEnrollment.of(e))
                     .build();
@@ -77,13 +77,13 @@ public class FabricCAService {
         }
     }
 
-    public Client register(String mspId, String affiliation, Registar registar) {
+    public Client register(String mspId, String affiliation, Registrar registrar) {
         try {
             String name = mspId + "-api-" + System.currentTimeMillis();
             RegistrationRequest request = new RegistrationRequest(
                     name, affiliation);
             request.addAttribute(new Attribute("role", HFCAClient.HFCA_TYPE_CLIENT));
-            String secret = caClient.register(request, registar);
+            String secret = caClient.register(request, registrar);
             Enrollment e = enroll(CAUser.builder()
                     .name(request.getEnrollmentID())
                     .secret(secret)
