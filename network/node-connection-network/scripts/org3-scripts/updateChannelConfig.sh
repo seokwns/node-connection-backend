@@ -47,7 +47,7 @@ createConfigUpdate ${CHANNEL_NAME} ${TEST_NETWORK_HOME}/channel-artifacts/config
 infoln "Signing config transaction"
 signConfigtxAsPeerOrg 1 ${TEST_NETWORK_HOME}/channel-artifacts/org3_update_in_envelope.pb
 
-infoln "Submitting transaction from a different peer (peer0.org2) which also signs it"
+infoln "Submitting transaction from a different peer (peer0.viewer) which also signs it"
 setGlobals 2
 set -x
 peer channel update -f ${TEST_NETWORK_HOME}/channel-artifacts/org3_update_in_envelope.pb -c ${CHANNEL_NAME} -o localhost:7050 --ordererTLSHostnameOverride orderer.node.connection --tls --cafile "$ORDERER_CA"

@@ -35,8 +35,8 @@ Brings up
 
 Fabric metrics targets:
 
-- `peer0.org1.node.connection:9444`
-- `peer0.org2.node.connection:9445`
+- `peer0.registry.node.connection:9444`
+- `peer0.viewer.node.connection:9445`
 - `orderer.node.connection:9443`
 
 System and docker metrics targets:

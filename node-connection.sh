@@ -93,14 +93,14 @@ function config_org_env() {
     cd ./network/node-connection-network
     export PATH=$PATH:$(realpath ../bin)
     export FABRIC_CFG_PATH=$(realpath ../config)
-    ./setOrgEnv.sh Org1 | while IFS= read -r line; do
+    ./setOrgEnv.sh Registry | while IFS= read -r line; do
         if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
             var_name=${BASH_REMATCH[1]}
             var_value=${BASH_REMATCH[2]}
             export $var_name="$var_value"
         fi
     done
-    ./setOrgEnv.sh Org2 | while IFS= read -r line; do
+    ./setOrgEnv.sh Viewer | while IFS= read -r line; do
         if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
             var_name=${BASH_REMATCH[1]}
             var_value=${BASH_REMATCH[2]}
