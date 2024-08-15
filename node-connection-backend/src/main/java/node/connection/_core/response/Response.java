@@ -5,7 +5,7 @@ public class Response {
         return new ResponseData<>(true, contents, null);
     }
 
-    public static <T> ResponseData<T> error(int status, String message) {
+    public static <T> ResponseData<T> error(String status, String message) {
         ErrorData errorData = new ErrorData(status, message);
         return new ResponseData<>(false, null, errorData);
     }

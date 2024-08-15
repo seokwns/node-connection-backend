@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
                         MethodArgumentTypeMismatchException.class })
     public ResponseEntity<?> methodArgumentNotValid(Exception exception) {
         String message = exception.getMessage();
-        int code = ExceptionStatus.INVALID_METHOD_ARGUMENTS_ERROR.getCode();
+        String code = ExceptionStatus.INVALID_METHOD_ARGUMENTS_ERROR.getCode();
 
         ErrorData errorData = new ErrorData(code, message);
         ResponseData<?> responseData = new ResponseData<>(false, null, errorData);

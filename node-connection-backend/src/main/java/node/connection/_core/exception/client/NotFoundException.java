@@ -28,7 +28,7 @@ public class NotFoundException extends RuntimeException implements CustomExcepti
     }
 
     @Override
-    public int code() {
+    public String code() {
         return exception.getCode();
     }
 }

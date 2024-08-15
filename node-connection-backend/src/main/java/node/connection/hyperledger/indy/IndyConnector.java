@@ -1,7 +1,6 @@
-package node.connection.hyperledger;
+package node.connection.hyperledger.indy;
 
 import lombok.extern.slf4j.Slf4j;
-import node.connection.wallet.WalletConfigFactory;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,16 +8,16 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class IndyManager {
+public class IndyConnector {
 
     private final Pool pool;
     private final WalletConfigFactory walletConfigFactory;
     private final IndyUtils indyUtils;
 
-    public IndyManager(
+    public IndyConnector(
             @Autowired WalletConfigFactory walletConfigFactory,
             @Autowired IndyUtils indyUtils
-    ) throws Exception {
+    ) {
         this.walletConfigFactory = walletConfigFactory;
         this.indyUtils = indyUtils;
         this.pool = this.indyUtils.initializeIndyConnectionPool();

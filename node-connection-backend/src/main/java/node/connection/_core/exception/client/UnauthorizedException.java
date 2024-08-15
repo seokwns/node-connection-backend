@@ -28,7 +28,7 @@ public class UnauthorizedException extends RuntimeException implements CustomExc
     }
 
     @Override
-    public int code() {
+    public String code() {
         return exception.getCode();
     }
 }

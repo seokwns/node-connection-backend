@@ -28,7 +28,7 @@ public class BadRequestException extends RuntimeException implements CustomExcep
     }
 
     @Override
-    public int code() {
+    public String code() {
         return exception.getCode();
     }
 }

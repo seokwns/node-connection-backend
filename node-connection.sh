@@ -8,6 +8,53 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+function setup_requirements() {
+    # Determine the shell type
+    SHELL_PROFILE=""
+    if [ -n "$BASH_VERSION" ]; then
+        SHELL_PROFILE="$HOME/.bashrc"
+    elif [ -n "$ZSH_VERSION" ]; then
+        SHELL_PROFILE="$HOME/.zshrc"
+    else
+        echo -e "${RED}Unsupported shell. Please use bash or zsh.${NC}"
+        return 1
+    fi
+
+    # Check if Go is installed
+    if ! command -v go &> /dev/null
+    then
+        echo -e "${YELLOW}Go is not installed. Installing Go...${NC}"
+        wget https://golang.org/dl/go1.19.1.linux-amd64.tar.gz
+        sudo tar -xzf go1.19.1.linux-amd64.tar.gz -C /usr/local/
+        # Set up Go environment variables
+        if ! grep -q "export PATH=\$PATH:/usr/local/go/bin" "$SHELL_PROFILE"; then
+            echo "export PATH=\$PATH:/usr/local/go/bin" >> "$SHELL_PROFILE"
+            source "$SHELL_PROFILE"
+        fi
+        echo -e "${GREEN}Go has been installed successfully.${NC}"
+    else
+        echo -e "${GREEN}Go is already installed.${NC}"
+    fi
+
+    # Check if Node.js is installed
+    if ! command -v node &> /dev/null
+    then
+        echo -e "${YELLOW}Node.js is not installed. Installing Node.js...${NC}"
+        # Install NVM (Node Version Manager)
+        wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+        # Load NVM script
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        
+        # Install the latest LTS version of Node.js
+        nvm install --lts
+        nvm use --lts
+        echo -e "${GREEN}Node.js has been installed successfully.${NC}"
+    else
+        echo -e "${GREEN}Node.js is already installed.${NC}"
+    fi
+}
+
 function setup_hyperledger_fabric() {
     if [ ! -d "./network/bin" ] || [ ! -d "./network/builders" ] || [ ! -d "./network/config" ]; then
         echo -e "${YELLOW}Required folders not found in ./network/. Proceeding with setup.${NC}"
@@ -65,6 +112,9 @@ function config_org_env() {
 
 function start_application() {
     echo -e "${YELLOW}Starting node-connection application...${NC}"
+
+    echo -e "${YELLOW}Checking requirements installation...${NC}"
+    setup_requirements
 
     echo -e "${YELLOW}Checking Hyperledger installation...${NC}"
     setup_hyperledger_fabric

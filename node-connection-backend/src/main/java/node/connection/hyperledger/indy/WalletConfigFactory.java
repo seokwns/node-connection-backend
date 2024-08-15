@@ -1,4 +1,4 @@
-package node.connection.wallet;
+package node.connection.hyperledger.indy;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
