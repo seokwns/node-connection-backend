@@ -20,7 +20,6 @@ configurations {
 }
 
 repositories {
-//    mavenCentral()
     maven {
         url = uri("https://repo.danubetech.com/repository/maven-releases/")
     }
@@ -55,15 +54,11 @@ dependencies {
     // hyperledger fabric dependency
     implementation 'org.hyperledger.fabric:fabric-gateway-java:1.4.4'
     implementation 'io.netty:netty-all:4.1.52.Final'
-//    implementation 'io.grpc:grpc-netty-shaded:1.65.1'
     implementation(group: 'io.netty', name: 'netty-tcnative-boringssl-static', version: '2.0.65.Final')  // for openSSL
     implementation(group: 'io.netty', name: 'netty-tcnative-boringssl-static', version: '2.0.65.Final', classifier: 'linux-x86_64')
     implementation(group: 'io.netty', name: 'netty-tcnative-boringssl-static', version: '2.0.65.Final', classifier: 'osx-aarch_64')
     implementation(group: 'io.netty', name: 'netty-tcnative-boringssl-static', version: '2.0.65.Final', classifier: 'linux-aarch_64')
     implementation(group: 'io.netty', name: 'netty-tcnative-boringssl-static', version: '2.0.65.Final', classifier: 'osx-x86_64')
-//    compileOnly 'io.grpc:grpc-api:1.59.0'
-    runtimeOnly 'io.grpc:grpc-netty-shaded:1.65.1'
-//    implementation 'com.google.code.gson:gson:2.10.1'
 
     // hyperledger indy dependency
     implementation("net.java.dev.jna:jna:5.12.1")
