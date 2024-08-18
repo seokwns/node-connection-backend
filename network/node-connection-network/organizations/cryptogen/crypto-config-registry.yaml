@@ -8,10 +8,10 @@
 # ---------------------------------------------------------------------------
 PeerOrgs:
   # ---------------------------------------------------------------------------
-  # Org2
+  # Registry
   # ---------------------------------------------------------------------------
-  - Name: Org2
-    Domain: org2.node.connection
+  - Name: Registry
+    Domain: registry.node.connection
     EnableNodeOUs: true
     # ---------------------------------------------------------------------------
     # "Specs"
@@ -29,8 +29,7 @@ PeerOrgs:
     #                 which obtains its values from the Spec.Hostname and
     #                 Org.Domain, respectively.
     # ---------------------------------------------------------------------------
-    # Specs:
-    #   - Hostname: foo # implicitly "foo.org1.node.connection"
+    #   - Hostname: foo # implicitly "foo.registry.node.connection"
     #     CommonName: foo27.org5.node.connection # overrides Hostname-based FQDN set above
     #   - Hostname: bar
     #   - Hostname: baz

@@ -6,11 +6,11 @@
 version: '3.7'
 
 services:
-  peer0.org1.node.connection:
+  peer0.registry.node.connection:
     volumes:
       - ./podman/peercfg:/etc/hyperledger/peercfg
 
-  peer0.org2.node.connection:
+  peer0.viewer.node.connection:
     volumes:
       - ./podman/peercfg:/etc/hyperledger/peercfg
 

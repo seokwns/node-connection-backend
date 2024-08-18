@@ -19,8 +19,8 @@ TEST_NETWORK_HOME=${TEST_NETWORK_HOME:-${PWD}}
 
 export CORE_PEER_TLS_ENABLED=true
 export ORDERER_CA=${TEST_NETWORK_HOME}/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem
-export PEER0_ORG1_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org1.node.connection/tlsca/tlsca.org1.node.connection-cert.pem
-export PEER0_ORG2_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org2.node.connection/tlsca/tlsca.org2.node.connection-cert.pem
+export PEER0_REGISTRY_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/registry.node.connection/tlsca/tlsca.registry.node.connection-cert.pem
+export PEER0_VIEWER_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/viewer.node.connection/tlsca/tlsca.viewer.node.connection-cert.pem
 export PEER0_ORG3_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org3.node.connection/tlsca/tlsca.org3.node.connection-cert.pem
 
 # Set environment variables for the peer org
@@ -33,14 +33,14 @@ setGlobals() {
   fi
   infoln "Using organization ${USING_ORG}"
   if [ $USING_ORG -eq 1 ]; then
-    export CORE_PEER_LOCALMSPID=Org1MSP
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG1_CA
-    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org1.node.connection/users/Admin@org1.node.connection/msp
+    export CORE_PEER_LOCALMSPID=RegistryMSP
+    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_REGISTRY_CA
+    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/registry.node.connection/users/Admin@registry.node.connection/msp
     export CORE_PEER_ADDRESS=localhost:7051
   elif [ $USING_ORG -eq 2 ]; then
-    export CORE_PEER_LOCALMSPID=Org2MSP
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG2_CA
-    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org2.node.connection/users/Admin@org2.node.connection/msp
+    export CORE_PEER_LOCALMSPID=ViewerMSP
+    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_VIEWER_CA
+    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/viewer.node.connection/users/Admin@viewer.node.connection/msp
     export CORE_PEER_ADDRESS=localhost:9051
   elif [ $USING_ORG -eq 3 ]; then
     export CORE_PEER_LOCALMSPID=Org3MSP
@@ -74,7 +74,11 @@ parsePeerConnectionParameters() {
     fi
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" --peerAddresses $CORE_PEER_ADDRESS)
     ## Set path to TLS certificate
-    CA=PEER0_ORG$1_CA
+    if [ "$1" -eq 1 ]; then
+      CA=PEER0_REGISTRY_CA
+    elif [ "$1" -eq 2 ]; then
+      CA=PEER0_VIEWER_CA
+    fi
     TLSINFO=(--tlsRootCertFiles "${!CA}")
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" "${TLSINFO[@]}")
     # shift by one to get to the next organization

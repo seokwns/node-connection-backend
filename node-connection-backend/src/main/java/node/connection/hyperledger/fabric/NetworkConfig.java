@@ -44,7 +44,7 @@ public class NetworkConfig {
         }
 
         public Builder peer(String name, String url) {
-            Node peer = new Node.Builder()
+            Node peer = Node.builder()
                     .name(name)
                     .url(url)
                     .build();
@@ -58,7 +58,7 @@ public class NetworkConfig {
         }
 
         public Builder orderer(String name, String url) {
-            orderer = new Node.Builder()
+            orderer = Node.builder()
                     .name(name)
                     .url(url)
                     .build();
@@ -66,7 +66,7 @@ public class NetworkConfig {
         }
 
         public Builder node(String name, String url) {
-            node = new Node.Builder()
+            node = Node.builder()
                     .name(name)
                     .url(url)
                     .build();

@@ -1,10 +1,11 @@
 package node.connection.hyperledger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import node.connection.hyperledger.fabric.Client;
 import node.connection.hyperledger.fabric.FabricConnector;
 import node.connection.hyperledger.fabric.FabricPeer;
-import node.connection.hyperledger.fabric.NetworkConfig;
+import node.connection.hyperledger.fabric.FabricProposalResponse;
 import node.connection.hyperledger.fabric.ca.CAInfo;
 import node.connection.hyperledger.fabric.ca.CAUser;
 import node.connection.hyperledger.fabric.ca.FabricCAConnector;
@@ -12,11 +13,16 @@ import node.connection.hyperledger.fabric.ca.Registrar;
 import node.connection.hyperledger.fabric.util.FileUtils;
 import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric_ca.sdk.HFCAInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
 public class FabricService {
+
+    private final FabricConfig fabricConfig;
 
     private final CAInfo caInfo;
 
@@ -26,18 +32,25 @@ public class FabricService {
 
     private FabricConnector fabricConnector;
 
-    private NetworkConfig networkConfig;
+    private node.connection.hyperledger.fabric.NetworkConfig networkConfig;
 
     private Client client;
 
-    private Channel channel;
+    private final Channel channel;
+
+    private final ObjectMapper objectMapper;
 
 
-    public FabricService() {
-        this.caInfo = new CAInfo.Builder()
-                .name(TestConfig.caName)
-                .url(TestConfig.caUrl)
-                .pemFile(TestConfig.caPemFilePath)
+    public FabricService(
+            @Autowired FabricConfig fabricConfig,
+            @Autowired ObjectMapper objectMapper
+    ) {
+        this.fabricConfig = fabricConfig;
+        this.objectMapper = objectMapper;
+        this.caInfo = CAInfo.builder()
+                .name(this.fabricConfig.getCaName())
+                .url(this.fabricConfig.getCaUrl())
+                .pemFile(this.fabricConfig.getCaPemFilePath())
                 .allowAllHostNames(true)
                 .build();
 
@@ -46,13 +59,13 @@ public class FabricService {
         log.debug("caName:{}, version:{}", info.getCAName(), info.getVersion());
 
         CAUser admin = CAUser.builder()
-                .name(TestConfig.caAdminName)
-                .secret(TestConfig.caAdminSecret)
+                .name(this.fabricConfig.getCaAdminName())
+                .secret(this.fabricConfig.getCaAdminSecret())
                 .build();
 
         this.registrar = this.fabricCAConnector.registrarEnroll(admin);
         String adminJson = registrar.toJson();
-        FileUtils.write(TestConfig.mspFolder + "/ca-admin.json", adminJson);
+        FileUtils.write(this.fabricConfig.getMspFolder() + "/ca-admin.json", adminJson);
         log.info("fabric-ca admin 계정 enroll 완료");
 
         this.register();
@@ -72,45 +85,53 @@ public class FabricService {
     public void register() {
         log.info("ca info: {}", this.fabricCAConnector.info());
 
-        String mspId = TestConfig.userMspId;
-        String affiliation = TestConfig.userAffiliation;
+        String mspId = this.fabricConfig.getUserMspId();
+        String affiliation = this.fabricConfig.getUserAffiliation();
         Client client = fabricCAConnector.register(mspId, affiliation, this.registrar);
         String clientJson = client.toJson();
-        FileUtils.write(TestConfig.user1MspPath, clientJson);
+        FileUtils.write(this.fabricConfig.getUser1MspPath(), clientJson);
     }
 
     private void initialize() {
-        String userJson = FileUtils.read(TestConfig.user1MspPath);
+        String userJson = FileUtils.read(this.fabricConfig.getUser1MspPath());
 
-        FabricPeer peer0Org1 = FabricPeer.builder()
-                .name(TestConfig.peer0Org1Name)
-                .url(TestConfig.peer0Org1Url)
-                .pemFile(TestConfig.peer0Org1PemFilePath)
-                .hostnameOverride(TestConfig.peer0Org1Name)
+        FabricPeer peer0Registry = FabricPeer.builder()
+                .name(this.fabricConfig.getRegistryName())
+                .url(this.fabricConfig.getRegistryUrl())
+                .pemFile(this.fabricConfig.getRegistryPemFilePath())
+                .hostnameOverride(this.fabricConfig.getRegistryName())
                 .build();
 
-        FabricPeer peer0Org2 = FabricPeer.builder()
-                .name(TestConfig.peer0Org2Name)
-                .url(TestConfig.peer0Org2Url)
-                .pemFile(TestConfig.peer0Org2PemFilePath)
-                .hostnameOverride(TestConfig.peer0Org2Name)
+        FabricPeer peer0Viewer = FabricPeer.builder()
+                .name(this.fabricConfig.getViewerName())
+                .url(this.fabricConfig.getViewerUrl())
+                .pemFile(this.fabricConfig.getViewerPemFilePath())
+                .hostnameOverride(this.fabricConfig.getViewerName())
                 .build();
 
         FabricPeer orderer = FabricPeer.builder()
-                .name(TestConfig.ordererName)
-                .url(TestConfig.ordererUrl)
-                .pemFile(TestConfig.ordererPemFilePath)
-                .hostnameOverride(TestConfig.ordererName)
+                .name(this.fabricConfig.getOrdererName())
+                .url(this.fabricConfig.getOrdererUrl())
+                .pemFile(this.fabricConfig.getOrdererPemFilePath())
+                .hostnameOverride(this.fabricConfig.getOrdererName())
                 .build();
 
-        NetworkConfig networkConfig = new NetworkConfig.Builder()
-                .channelName(TestConfig.channelName)
-                .peer(peer0Org1)
-                .peer(peer0Org2)
+        node.connection.hyperledger.fabric.NetworkConfig networkConfig = new node.connection.hyperledger.fabric.NetworkConfig.Builder()
+                .channelName(this.fabricConfig.getChannelName())
+                .peer(peer0Registry)
+                .peer(peer0Viewer)
                 .orderer(orderer)
                 .build();
 
         this.client = Client.fromJson(userJson);
         this.networkConfig = networkConfig;
+    }
+
+    public void setChaincode(String name, String version) {
+        this.fabricConnector.setChaincode(name, version);
+    }
+
+    public FabricProposalResponse invoke(String fcn, List<String> params) {
+        return this.fabricConnector.invoke(fcn, params);
     }
 }

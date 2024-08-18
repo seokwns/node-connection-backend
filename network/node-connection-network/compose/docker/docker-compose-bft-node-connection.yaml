@@ -5,8 +5,8 @@
 
 version: '3.7'
 services:
-  peer0.org1.node.connection:
-    container_name: peer0.org1.node.connection
+  peer0.registry.node.connection:
+    container_name: peer0.registry.node.connection
     image: hyperledger/fabric-peer:latest
     labels:
       service: hyperledger-fabric
@@ -18,8 +18,8 @@ services:
       - ./docker/peercfg:/etc/hyperledger/peercfg
       - ${DOCKER_SOCK}:/host/var/run/docker.sock
 
-  peer0.org2.node.connection:
-    container_name: peer0.org2.node.connection
+  peer0.viewer.node.connection:
+    container_name: peer0.viewer.node.connection
     image: hyperledger/fabric-peer:latest
     labels:
       service: hyperledger-fabric

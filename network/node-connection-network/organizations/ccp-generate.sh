@@ -29,17 +29,17 @@ function yaml_ccp {
 ORG=1
 P0PORT=7051
 CAPORT=7054
-PEERPEM=organizations/peerOrganizations/org1.node.connection/tlsca/tlsca.org1.node.connection-cert.pem
-CAPEM=organizations/peerOrganizations/org1.node.connection/ca/ca.org1.node.connection-cert.pem
+PEERPEM=organizations/peerOrganizations/registry.node.connection/tlsca/tlsca.registry.node.connection-cert.pem
+CAPEM=organizations/peerOrganizations/registry.node.connection/ca/ca.registry.node.connection-cert.pem
 
-echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org1.node.connection/connection-org1.json
-echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org1.node.connection/connection-org1.yaml
+echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/registry.node.connection/connection-registry.json
+echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/registry.node.connection/connection-registry.yaml
 
 ORG=2
 P0PORT=9051
 CAPORT=8054
-PEERPEM=organizations/peerOrganizations/org2.node.connection/tlsca/tlsca.org2.node.connection-cert.pem
-CAPEM=organizations/peerOrganizations/org2.node.connection/ca/ca.org2.node.connection-cert.pem
+PEERPEM=organizations/peerOrganizations/viewer.node.connection/tlsca/tlsca.viewer.node.connection-cert.pem
+CAPEM=organizations/peerOrganizations/viewer.node.connection/ca/ca.viewer.node.connection-cert.pem
 
-echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org2.node.connection/connection-org2.json
-echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org2.node.connection/connection-org2.yaml
+echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/viewer.node.connection/connection-viewer.json
+echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/viewer.node.connection/connection-viewer.yaml
