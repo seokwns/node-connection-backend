@@ -11,11 +11,14 @@ import node.connection.hyperledger.fabric.ca.Registrar;
 import node.connection.hyperledger.fabric.util.FileUtils;
 import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric_ca.sdk.HFCAInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 public class FabricService {
+
+    private final FabricConfig fabricConfig;
 
     private final CAInfo caInfo;
 
@@ -32,11 +35,12 @@ public class FabricService {
     private Channel channel;
 
 
-    public FabricService() {
-        this.caInfo = new CAInfo.Builder()
-                .name(FabricConfig.caName)
-                .url(FabricConfig.caUrl)
-                .pemFile(FabricConfig.caPemFilePath)
+    public FabricService(@Autowired FabricConfig fabricConfig) {
+        this.fabricConfig = fabricConfig;
+        this.caInfo = CAInfo.builder()
+                .name(this.fabricConfig.getCaName())
+                .url(this.fabricConfig.getCaUrl())
+                .pemFile(this.fabricConfig.getCaPemFilePath())
                 .allowAllHostNames(true)
                 .build();
 
@@ -45,13 +49,13 @@ public class FabricService {
         log.debug("caName:{}, version:{}", info.getCAName(), info.getVersion());
 
         CAUser admin = CAUser.builder()
-                .name(FabricConfig.caAdminName)
-                .secret(FabricConfig.caAdminSecret)
+                .name(this.fabricConfig.getCaAdminName())
+                .secret(this.fabricConfig.getCaAdminSecret())
                 .build();
 
         this.registrar = this.fabricCAConnector.registrarEnroll(admin);
         String adminJson = registrar.toJson();
-        FileUtils.write(FabricConfig.mspFolder + "/ca-admin.json", adminJson);
+        FileUtils.write(this.fabricConfig.getMspFolder() + "/ca-admin.json", adminJson);
         log.info("fabric-ca admin 계정 enroll 완료");
 
         this.register();
@@ -71,39 +75,39 @@ public class FabricService {
     public void register() {
         log.info("ca info: {}", this.fabricCAConnector.info());
 
-        String mspId = FabricConfig.userMspId;
-        String affiliation = FabricConfig.userAffiliation;
+        String mspId = this.fabricConfig.getUserMspId();
+        String affiliation = this.fabricConfig.getUserAffiliation();
         Client client = fabricCAConnector.register(mspId, affiliation, this.registrar);
         String clientJson = client.toJson();
-        FileUtils.write(FabricConfig.user1MspPath, clientJson);
+        FileUtils.write(this.fabricConfig.getUser1MspPath(), clientJson);
     }
 
     private void initialize() {
-        String userJson = FileUtils.read(FabricConfig.user1MspPath);
+        String userJson = FileUtils.read(this.fabricConfig.getUser1MspPath());
 
         FabricPeer peer0Registry = FabricPeer.builder()
-                .name(FabricConfig.peer0RegistryName)
-                .url(FabricConfig.peer0RegistryUrl)
-                .pemFile(FabricConfig.peer0RegistryPemFilePath)
-                .hostnameOverride(FabricConfig.peer0RegistryName)
+                .name(this.fabricConfig.getRegistryName())
+                .url(this.fabricConfig.getRegistryUrl())
+                .pemFile(this.fabricConfig.getRegistryPemFilePath())
+                .hostnameOverride(this.fabricConfig.getRegistryName())
                 .build();
 
         FabricPeer peer0Viewer = FabricPeer.builder()
-                .name(FabricConfig.peer0ViewerName)
-                .url(FabricConfig.peer0ViewerUrl)
-                .pemFile(FabricConfig.peer0ViewerPemFilePath)
-                .hostnameOverride(FabricConfig.peer0ViewerName)
+                .name(this.fabricConfig.getViewerName())
+                .url(this.fabricConfig.getViewerUrl())
+                .pemFile(this.fabricConfig.getViewerPemFilePath())
+                .hostnameOverride(this.fabricConfig.getViewerName())
                 .build();
 
         FabricPeer orderer = FabricPeer.builder()
-                .name(FabricConfig.ordererName)
-                .url(FabricConfig.ordererUrl)
-                .pemFile(FabricConfig.ordererPemFilePath)
-                .hostnameOverride(FabricConfig.ordererName)
+                .name(this.fabricConfig.getOrdererName())
+                .url(this.fabricConfig.getOrdererUrl())
+                .pemFile(this.fabricConfig.getOrdererPemFilePath())
+                .hostnameOverride(this.fabricConfig.getOrdererName())
                 .build();
 
         node.connection.hyperledger.fabric.NetworkConfig networkConfig = new node.connection.hyperledger.fabric.NetworkConfig.Builder()
-                .channelName(FabricConfig.channelName)
+                .channelName(this.fabricConfig.getChannelName())
                 .peer(peer0Registry)
                 .peer(peer0Viewer)
                 .orderer(orderer)

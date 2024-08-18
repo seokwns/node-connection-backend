@@ -22,7 +22,7 @@ public class FabricPeer {
         if (pemFile != null) {
             properties.setProperty("pemFile", pemFile);
         }
-        return new Node.Builder()
+        return Node.builder()
                 .name(name)
                 .url(url)
                 .properties(properties)
