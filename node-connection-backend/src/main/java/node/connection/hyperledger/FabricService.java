@@ -1,9 +1,11 @@
 package node.connection.hyperledger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import node.connection.hyperledger.fabric.Client;
 import node.connection.hyperledger.fabric.FabricConnector;
 import node.connection.hyperledger.fabric.FabricPeer;
+import node.connection.hyperledger.fabric.FabricProposalResponse;
 import node.connection.hyperledger.fabric.ca.CAInfo;
 import node.connection.hyperledger.fabric.ca.CAUser;
 import node.connection.hyperledger.fabric.ca.FabricCAConnector;
@@ -13,6 +15,8 @@ import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric_ca.sdk.HFCAInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -32,11 +36,17 @@ public class FabricService {
 
     private Client client;
 
-    private Channel channel;
+    private final Channel channel;
+
+    private final ObjectMapper objectMapper;
 
 
-    public FabricService(@Autowired FabricConfig fabricConfig) {
+    public FabricService(
+            @Autowired FabricConfig fabricConfig,
+            @Autowired ObjectMapper objectMapper
+    ) {
         this.fabricConfig = fabricConfig;
+        this.objectMapper = objectMapper;
         this.caInfo = CAInfo.builder()
                 .name(this.fabricConfig.getCaName())
                 .url(this.fabricConfig.getCaUrl())
@@ -115,5 +125,13 @@ public class FabricService {
 
         this.client = Client.fromJson(userJson);
         this.networkConfig = networkConfig;
+    }
+
+    public void setChaincode(String name, String version) {
+        this.fabricConnector.setChaincode(name, version);
+    }
+
+    public FabricProposalResponse invoke(String fcn, List<String> params) {
+        return this.fabricConnector.invoke(fcn, params);
     }
 }
