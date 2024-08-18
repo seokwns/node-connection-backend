@@ -110,6 +110,38 @@ function config_org_env() {
     cd ../..
 }
 
+function export_config() {
+    # Indy Wallet Storage
+    export USER_WALLET_STORAGE="src/main/java/node/connection/wallet/user"
+    export COURT_WALLET_STORAGE="src/main/java/node/connection/wallet/court"
+
+    # Fabric CA Information
+    export CA_NAME="ca-registry"
+    export CA_URL="http://217.15.165.146:7054"
+    export CA_ADMIN_NAME="admin"
+    export CA_ADMIN_PASSWORD="adminpw"
+    export CA_PEM=$(cat ./network/node-connection-network/organizations/fabric-ca/registry/ca-cert.pem)
+
+    # Fabric User Information
+    export USER_MSP="RegistryMSP"
+    export USER_AFFILIATION="registry.department1"
+
+    # Fabric Organization Information
+    export REGISTRY_PEER_NAME="peer0.registry.node.connection"
+    export REGISTRY_PEER_URL="grpcs://217.15.165.146:7051"
+    export REGISTRY_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/registry.node.connection/tlsca/tlsca.registry.node.connection-cert.pem)
+
+    export VIEWER_PEER_NAME="peer0.viewer.node.connection"
+    export VIEWER_PEER_URL="grpcs://217.15.165.146:9051"
+    export VIEWER_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/viewer.node.connection/tlsca/tlsca.viewer.node.connection-cert.pem)
+
+    export ORDERER_NAME="orderer.node.connection"
+    export ORDERER_URL="grpcs://217.15.165.146:7050"
+    export ORDERER_PEM=$(cat ./network/node-connection-network/organizations/ordererOrganizations/ordererOrganizations/orderer.node.connection/tlsca/tlsca.node.connection-cert.pem)
+
+    export CHANNEL_NAME="nodeconnectionchannel"
+}
+
 function start_application() {
     echo -e "${YELLOW}Starting node-connection application...${NC}"
 
@@ -128,6 +160,9 @@ function start_application() {
 
     echo -e "${YELLOW}Create default channel...${NC}"
     ./network/node-connection-network/network.sh createChannel -c nodeconnectionchannel
+
+    echo -e "${YELLOW}Export hyperledger network config...${NC}"
+    export_config
 
     # TODO: 백엔드 서버 시작
     
