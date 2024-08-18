@@ -111,35 +111,68 @@ function config_org_env() {
 }
 
 function export_config() {
+    # Write the configuration to hyperledger.config.sh
+    echo '#!/bin/bash' > hyperledger.config.sh
+    echo '' >> hyperledger.config.sh
+    echo '# Hyperledger Fabric and Indy Configuration' >> hyperledger.config.sh
+    echo 'function export_config() {' >> hyperledger.config.sh
+
     # Indy Wallet Storage
-    export USER_WALLET_STORAGE="src/main/java/node/connection/wallet/user"
-    export COURT_WALLET_STORAGE="src/main/java/node/connection/wallet/court"
+    echo '    # Indy Wallet Storage' >> hyperledger.config.sh
+    echo '    USER_WALLET_STORAGE="src/main/java/node/connection/wallet/user"' >> hyperledger.config.sh
+    echo '    COURT_WALLET_STORAGE="src/main/java/node/connection/wallet/court"' >> hyperledger.config.sh
+    echo '    export USER_WALLET_STORAGE COURT_WALLET_STORAGE' >> hyperledger.config.sh
 
     # Fabric CA Information
-    export CA_NAME="ca-registry"
-    export CA_URL="http://217.15.165.146:7054"
-    export CA_ADMIN_NAME="admin"
-    export CA_ADMIN_PASSWORD="adminpw"
-    export CA_PEM=$(cat ./network/node-connection-network/organizations/fabric-ca/registry/ca-cert.pem)
+    echo '' >> hyperledger.config.sh
+    echo '    # Fabric CA Information' >> hyperledger.config.sh
+    echo '    CA_NAME="ca-registry"' >> hyperledger.config.sh
+    echo '    CA_URL="http://217.15.165.146:7054"' >> hyperledger.config.sh
+    echo '    CA_ADMIN_NAME="admin"' >> hyperledger.config.sh
+    echo '    CA_ADMIN_PASSWORD="adminpw"' >> hyperledger.config.sh
+    echo '    CA_PEM=$(cat ./network/node-connection-network/organizations/fabric-ca/registry/ca-cert.pem)' >> hyperledger.config.sh
+    echo '    export CA_NAME CA_URL CA_ADMIN_NAME CA_ADMIN_PASSWORD CA_PEM' >> hyperledger.config.sh
 
     # Fabric User Information
-    export USER_MSP="RegistryMSP"
-    export USER_AFFILIATION="registry.department1"
+    echo '' >> hyperledger.config.sh
+    echo '    # Fabric User Information' >> hyperledger.config.sh
+    echo '    USER_MSP="RegistryMSP"' >> hyperledger.config.sh
+    echo '    USER_AFFILIATION="registry.department1"' >> hyperledger.config.sh
+    echo '    export USER_MSP USER_AFFILIATION' >> hyperledger.config.sh
 
     # Fabric Organization Information
-    export REGISTRY_PEER_NAME="peer0.registry.node.connection"
-    export REGISTRY_PEER_URL="grpcs://217.15.165.146:7051"
-    export REGISTRY_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/registry.node.connection/tlsca/tlsca.registry.node.connection-cert.pem)
+    echo '' >> hyperledger.config.sh
+    echo '    # Fabric Organization Information' >> hyperledger.config.sh
+    echo '    REGISTRY_PEER_NAME="peer0.registry.node.connection"' >> hyperledger.config.sh
+    echo '    REGISTRY_PEER_URL="grpcs://217.15.165.146:7051"' >> hyperledger.config.sh
+    echo '    REGISTRY_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/registry.node.connection/tlsca/tlsca.registry.node.connection-cert.pem)' >> hyperledger.config.sh
+    echo '    export REGISTRY_PEER_NAME REGISTRY_PEER_URL REGISTRY_PEER_PEM' >> hyperledger.config.sh
 
-    export VIEWER_PEER_NAME="peer0.viewer.node.connection"
-    export VIEWER_PEER_URL="grpcs://217.15.165.146:9051"
-    export VIEWER_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/viewer.node.connection/tlsca/tlsca.viewer.node.connection-cert.pem)
+    echo '' >> hyperledger.config.sh
+    echo '    VIEWER_PEER_NAME="peer0.viewer.node.connection"' >> hyperledger.config.sh
+    echo '    VIEWER_PEER_URL="grpcs://217.15.165.146:9051"' >> hyperledger.config.sh
+    echo '    VIEWER_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/viewer.node.connection/tlsca/tlsca.viewer.node.connection-cert.pem)' >> hyperledger.config.sh
+    echo '    export VIEWER_PEER_NAME VIEWER_PEER_URL VIEWER_PEER_PEM' >> hyperledger.config.sh
 
-    export ORDERER_NAME="orderer.node.connection"
-    export ORDERER_URL="grpcs://217.15.165.146:7050"
-    export ORDERER_PEM=$(cat ./network/node-connection-network/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem)
+    echo '' >> hyperledger.config.sh
+    echo '    ORDERER_NAME="orderer.node.connection"' >> hyperledger.config.sh
+    echo '    ORDERER_URL="grpcs://217.15.165.146:7050"' >> hyperledger.config.sh
+    echo '    ORDERER_PEM=$(cat ./network/node-connection-network/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem)' >> hyperledger.config.sh
+    echo '    export ORDERER_NAME ORDERER_URL ORDERER_PEM' >> hyperledger.config.sh
 
-    export CHANNEL_NAME="nodeconnectionchannel"
+    # Fabric Channel Information
+    echo '' >> hyperledger.config.sh
+    echo '    # Fabric Channel Information' >> hyperledger.config.sh
+    echo '    CHANNEL_NAME="nodeconnectionchannel"' >> hyperledger.config.sh
+    echo '    export CHANNEL_NAME' >> hyperledger.config.sh
+
+    echo '}' >> hyperledger.config.sh
+    echo '' >> hyperledger.config.sh
+    echo '# Call the function to export the configurations' >> hyperledger.config.sh
+    echo 'export_config' >> hyperledger.config.sh
+
+    # Make the script executable
+    chmod +x hyperledger.config.sh
 }
 
 function start_application() {
@@ -163,6 +196,7 @@ function start_application() {
 
     echo -e "${YELLOW}Export hyperledger network config...${NC}"
     export_config
+    source ./hyperledger.config.sh
 
     # TODO: 백엔드 서버 시작
     
