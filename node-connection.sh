@@ -94,24 +94,84 @@ function setup_hyperledger_indy() {
 }
 
 function config_org_env() {
-    cd ./network/node-connection-network
-    export PATH=$PATH:$(realpath ../bin)
-    export FABRIC_CFG_PATH=$(realpath ../config)
-    ./setOrgEnv.sh Registry | while IFS= read -r line; do
-        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
-            var_name=${BASH_REMATCH[1]}
-            var_value=${BASH_REMATCH[2]}
-            export $var_name="$var_value"
-        fi
-    done
-    ./setOrgEnv.sh Viewer | while IFS= read -r line; do
-        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
-            var_name=${BASH_REMATCH[1]}
-            var_value=${BASH_REMATCH[2]}
-            export $var_name="$var_value"
-        fi
-    done
-    cd ../..
+    CONFIG_FILE="hyperledger.organization.config.sh"
+    rm -f $CONFIG_FILE
+
+    {
+        cd ./network/node-connection-network
+
+        echo "export PATH=\$PATH:$(realpath ../bin)"
+        echo "export FABRIC_CFG_PATH=$(realpath ../config)"
+
+        while IFS= read -r line; do
+            if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+                var_name=${BASH_REMATCH[1]}
+                var_value=${BASH_REMATCH[2]}
+                echo "export $var_name=$var_value"
+            fi
+        done < <(./setOrgEnv.sh Registry)
+
+        while IFS= read -r line; do
+            if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+                var_name=${BASH_REMATCH[1]}
+                var_value=${BASH_REMATCH[2]}
+                echo "export $var_name=$var_value"
+            fi
+        done < <(./setOrgEnv.sh Viewer)
+
+        cd ../..
+    } > $CONFIG_FILE
+
+    chmod +x $CONFIG_FILE
+
+    echo "Configuration exported to $CONFIG_FILE"
+
+    local rc_file
+
+    # Determine the current shell
+    case "$SHELL" in
+        */bash)
+            rc_file="$HOME/.bashrc"
+            ;;
+        */zsh)
+            rc_file="$HOME/.zshrc"
+            ;;
+        *)
+            echo "Unsupported shell: $SHELL"
+            return 1
+            ;;
+    esac
+
+    # Define the path to the configuration script
+    current_dir=$(pwd)
+    config_script="$current_dir/$CONFIG_FILE"
+
+    # Check if the source command is already in the rc file
+    if grep -q "source $config_script" "$rc_file"; then
+        echo "Organization source command already exists in $rc_file."
+    else
+        # Append the source command to the rc file
+        echo "" >> "$rc_file"
+        echo "# Organization source Node Connection Hyperledger configuration script" >> "$rc_file"
+        echo "source $config_script" >> "$rc_file"
+        echo "Added source command to $rc_file."
+    fi
+
+    # Source the file to apply changes immediately
+    case "$SHELL" in
+        */bash)
+            source "$HOME/.bashrc"
+            echo "Organization config sourced $HOME/.bashrc"
+            ;;
+        */zsh)
+            zsh -c "source $HOME/.zshrc"
+            echo "Organization config sourced $HOME/.zshrc"
+            ;;
+        *)
+            echo "Unsupported shell: $SHELL"
+            return 1
+            ;;
+    esac
 }
 
 function export_config() {
@@ -213,7 +273,7 @@ function export_config() {
             echo "Sourced $HOME/.bashrc"
             ;;
         */zsh)
-            zsh -c "source ~/.zshrc"
+            zsh -c "source $HOME/.zshrc"
             echo "Sourced $HOME/.zshrc"
             ;;
         *)
