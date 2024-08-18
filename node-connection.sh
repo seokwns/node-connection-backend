@@ -137,7 +137,7 @@ function export_config() {
 
     export ORDERER_NAME="orderer.node.connection"
     export ORDERER_URL="grpcs://217.15.165.146:7050"
-    export ORDERER_PEM=$(cat ./network/node-connection-network/organizations/ordererOrganizations/ordererOrganizations/orderer.node.connection/tlsca/tlsca.node.connection-cert.pem)
+    export ORDERER_PEM=$(cat ./network/node-connection-network/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem)
 
     export CHANNEL_NAME="nodeconnectionchannel"
 }
