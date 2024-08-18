@@ -11,14 +11,18 @@ NC='\033[0m' # No Color
 function setup_requirements() {
     # Determine the shell type
     SHELL_PROFILE=""
-    if [ -n "$BASH_VERSION" ]; then
-        SHELL_PROFILE="$HOME/.bashrc"
-    elif [ -n "$ZSH_VERSION" ]; then
-        SHELL_PROFILE="$HOME/.zshrc"
-    else
-        echo -e "${RED}Unsupported shell. Please use bash or zsh.${NC}"
-        return 1
-    fi
+    case "$SHELL" in
+        */bash)
+            SHELL_PROFILE="$HOME/.bashrc"
+            ;;
+        */zsh)
+            SHELL_PROFILE="$HOME/.zshrc"
+            ;;
+        *)
+            echo "Unsupported shell: $SHELL"
+            return 1
+            ;;
+    esac
 
     # Check if Go is installed
     if ! command -v go &> /dev/null
@@ -111,68 +115,112 @@ function config_org_env() {
 }
 
 function export_config() {
+    current_dir=$(pwd)
+
     # Write the configuration to hyperledger.config.sh
-    echo '#!/bin/bash' > hyperledger.config.sh
+    echo '# Node Connection' > hyperledger.config.sh
     echo '' >> hyperledger.config.sh
     echo '# Hyperledger Fabric and Indy Configuration' >> hyperledger.config.sh
-    echo 'function export_config() {' >> hyperledger.config.sh
 
     # Indy Wallet Storage
-    echo '    # Indy Wallet Storage' >> hyperledger.config.sh
-    echo '    USER_WALLET_STORAGE="src/main/java/node/connection/wallet/user"' >> hyperledger.config.sh
-    echo '    COURT_WALLET_STORAGE="src/main/java/node/connection/wallet/court"' >> hyperledger.config.sh
-    echo '    export USER_WALLET_STORAGE COURT_WALLET_STORAGE' >> hyperledger.config.sh
+    echo '# Indy Wallet Storage' >> hyperledger.config.sh
+    echo 'USER_WALLET_STORAGE=src/main/java/node/connection/wallet/user' >> hyperledger.config.sh
+    echo 'COURT_WALLET_STORAGE=src/main/java/node/connection/wallet/court' >> hyperledger.config.sh
+    echo 'export USER_WALLET_STORAGE COURT_WALLET_STORAGE' >> hyperledger.config.sh
 
     # Fabric CA Information
     echo '' >> hyperledger.config.sh
-    echo '    # Fabric CA Information' >> hyperledger.config.sh
-    echo '    CA_NAME="ca-registry"' >> hyperledger.config.sh
-    echo '    CA_URL="http://217.15.165.146:7054"' >> hyperledger.config.sh
-    echo '    CA_ADMIN_NAME="admin"' >> hyperledger.config.sh
-    echo '    CA_ADMIN_PASSWORD="adminpw"' >> hyperledger.config.sh
-    echo '    CA_PEM=$(cat ./network/node-connection-network/organizations/fabric-ca/registry/ca-cert.pem)' >> hyperledger.config.sh
-    echo '    export CA_NAME CA_URL CA_ADMIN_NAME CA_ADMIN_PASSWORD CA_PEM' >> hyperledger.config.sh
+    echo '# Fabric CA Information' >> hyperledger.config.sh
+    echo 'CA_NAME=ca-registry' >> hyperledger.config.sh
+    echo 'CA_URL=http://localhost:7054' >> hyperledger.config.sh
+    echo 'CA_ADMIN_NAME=admin' >> hyperledger.config.sh
+    echo 'CA_ADMIN_PASSWORD=adminpw' >> hyperledger.config.sh
+    echo "CA_PEM=$current_dir/network/node-connection-network/organizations/fabric-ca/registry/ca-cert.pem" >> hyperledger.config.sh
+    echo 'export CA_NAME CA_URL CA_ADMIN_NAME CA_ADMIN_PASSWORD CA_PEM' >> hyperledger.config.sh
 
     # Fabric User Information
     echo '' >> hyperledger.config.sh
-    echo '    # Fabric User Information' >> hyperledger.config.sh
-    echo '    USER_MSP="RegistryMSP"' >> hyperledger.config.sh
-    echo '    USER_AFFILIATION="registry.department1"' >> hyperledger.config.sh
-    echo '    export USER_MSP USER_AFFILIATION' >> hyperledger.config.sh
+    echo '# Fabric User Information' >> hyperledger.config.sh
+    echo 'USER_MSP=RegistryMSP' >> hyperledger.config.sh
+    echo 'USER_AFFILIATION=org1.department1' >> hyperledger.config.sh
+    echo 'export USER_MSP USER_AFFILIATION' >> hyperledger.config.sh
 
     # Fabric Organization Information
     echo '' >> hyperledger.config.sh
-    echo '    # Fabric Organization Information' >> hyperledger.config.sh
-    echo '    REGISTRY_PEER_NAME="peer0.registry.node.connection"' >> hyperledger.config.sh
-    echo '    REGISTRY_PEER_URL="grpcs://217.15.165.146:7051"' >> hyperledger.config.sh
-    echo '    REGISTRY_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/registry.node.connection/tlsca/tlsca.registry.node.connection-cert.pem)' >> hyperledger.config.sh
-    echo '    export REGISTRY_PEER_NAME REGISTRY_PEER_URL REGISTRY_PEER_PEM' >> hyperledger.config.sh
+    echo '# Fabric Organization Information' >> hyperledger.config.sh
+    echo 'REGISTRY_PEER_NAME=peer0.registry.node.connection' >> hyperledger.config.sh
+    echo 'REGISTRY_PEER_URL=grpcs://localhost:7051' >> hyperledger.config.sh
+    echo "REGISTRY_PEER_PEM=$current_dir/network/node-connection-network/organizations/peerOrganizations/registry.node.connection/tlsca/tlsca.registry.node.connection-cert.pem" >> hyperledger.config.sh
+    echo 'export REGISTRY_PEER_NAME REGISTRY_PEER_URL REGISTRY_PEER_PEM' >> hyperledger.config.sh
 
     echo '' >> hyperledger.config.sh
-    echo '    VIEWER_PEER_NAME="peer0.viewer.node.connection"' >> hyperledger.config.sh
-    echo '    VIEWER_PEER_URL="grpcs://217.15.165.146:9051"' >> hyperledger.config.sh
-    echo '    VIEWER_PEER_PEM=$(cat ./network/node-connection-network/organizations/peerOrganizations/viewer.node.connection/tlsca/tlsca.viewer.node.connection-cert.pem)' >> hyperledger.config.sh
-    echo '    export VIEWER_PEER_NAME VIEWER_PEER_URL VIEWER_PEER_PEM' >> hyperledger.config.sh
+    echo 'VIEWER_PEER_NAME=peer0.viewer.node.connection' >> hyperledger.config.sh
+    echo 'VIEWER_PEER_URL=grpcs://localhost:9051' >> hyperledger.config.sh
+    echo "VIEWER_PEER_PEM=$current_dir/network/node-connection-network/organizations/peerOrganizations/viewer.node.connection/tlsca/tlsca.viewer.node.connection-cert.pem" >> hyperledger.config.sh
+    echo 'export VIEWER_PEER_NAME VIEWER_PEER_URL VIEWER_PEER_PEM' >> hyperledger.config.sh
 
     echo '' >> hyperledger.config.sh
-    echo '    ORDERER_NAME="orderer.node.connection"' >> hyperledger.config.sh
-    echo '    ORDERER_URL="grpcs://217.15.165.146:7050"' >> hyperledger.config.sh
-    echo '    ORDERER_PEM=$(cat ./network/node-connection-network/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem)' >> hyperledger.config.sh
-    echo '    export ORDERER_NAME ORDERER_URL ORDERER_PEM' >> hyperledger.config.sh
+    echo 'ORDERER_NAME=orderer.node.connection' >> hyperledger.config.sh
+    echo 'ORDERER_URL=grpcs://localhost:7050' >> hyperledger.config.sh
+    echo "ORDERER_PEM=$current_dir/network/node-connection-network/organizations/ordererOrganizations/node.connection/tlsca/tlsca.node.connection-cert.pem" >> hyperledger.config.sh
+    echo 'export ORDERER_NAME ORDERER_URL ORDERER_PEM' >> hyperledger.config.sh
 
     # Fabric Channel Information
     echo '' >> hyperledger.config.sh
-    echo '    # Fabric Channel Information' >> hyperledger.config.sh
-    echo '    CHANNEL_NAME="nodeconnectionchannel"' >> hyperledger.config.sh
-    echo '    export CHANNEL_NAME' >> hyperledger.config.sh
+    echo '# Fabric Channel Information' >> hyperledger.config.sh
+    echo 'CHANNEL_NAME=nodeconnectionchannel' >> hyperledger.config.sh
+    echo 'export CHANNEL_NAME' >> hyperledger.config.sh
 
-    echo '}' >> hyperledger.config.sh
     echo '' >> hyperledger.config.sh
-    echo '# Call the function to export the configurations' >> hyperledger.config.sh
-    echo 'export_config' >> hyperledger.config.sh
 
     # Make the script executable
     chmod +x hyperledger.config.sh
+
+    local rc_file
+
+    # Determine the current shell
+    case "$SHELL" in
+        */bash)
+            rc_file="$HOME/.bashrc"
+            ;;
+        */zsh)
+            rc_file="$HOME/.zshrc"
+            ;;
+        *)
+            echo "Unsupported shell: $SHELL"
+            return 1
+            ;;
+    esac
+
+    # Define the path to the configuration script
+    config_script="$current_dir/hyperledger.config.sh"
+
+    # Check if the source command is already in the rc file
+    if grep -q "source $config_script" "$rc_file"; then
+        echo "Source command already exists in $rc_file."
+    else
+        # Append the source command to the rc file
+        echo "" >> "$rc_file"
+        echo "# Source Node Connection Hyperledger configuration script" >> "$rc_file"
+        echo "source $config_script" >> "$rc_file"
+        echo "Added source command to $rc_file."
+    fi
+
+    # Source the file to apply changes immediately
+    case "$SHELL" in
+        */bash)
+            source "$HOME/.bashrc"
+            echo "Sourced $HOME/.bashrc"
+            ;;
+        */zsh)
+            zsh -c "source ~/.zshrc"
+            echo "Sourced $HOME/.zshrc"
+            ;;
+        *)
+            echo "Unsupported shell: $SHELL"
+            return 1
+            ;;
+    esac
 }
 
 function start_application() {
@@ -196,7 +244,6 @@ function start_application() {
 
     echo -e "${YELLOW}Export hyperledger network config...${NC}"
     export_config
-    source ./hyperledger.config.sh
 
     # TODO: 백엔드 서버 시작
     
