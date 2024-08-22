@@ -55,6 +55,7 @@ type ExclusivePartDescription struct {
 type BuildingPartDescription struct {
 	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
 	ReceiptDate              string    `json:"receiptDate"`              // 접수
+	PartNumber               string    `json:"partNumber"`               // 건물번호
 	BuildingDetails          string    `json:"buildingDetails"`          // 건물내역
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
 }
@@ -79,7 +80,7 @@ type FirstSection struct {
 type SecondSection struct {
 	RankNumber               string    `json:"rankNumber"`               // 순위번호
 	RegistrationPurpose      string    `json:"registrationPurpose"`      // 등기목적
-	ReceiptDate              time.Time `json:"receiptDate"`              // 접수
+	ReceiptDate              string    `json:"receiptDate"`              // 접수
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인
 	HolderAndAdditionalInfo  string    `json:"holderAndAdditionalInfo"`  // 권리자 및 기타사항
 }
