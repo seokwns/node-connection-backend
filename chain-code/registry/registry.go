@@ -36,32 +36,39 @@ type BuildingDescription struct {
 	LocationNumber           string    `json:"locationNumber"`           // 소재지번, 건물명칭 및 번호
 	BuildingDetails          string    `json:"buildingDetails"`          // 건물내역
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
-	LocationNumberAlternate  string    `json:"locationNumberAlternate"`  // 소재지번 (Alternate field)
 }
 
 type LandDescription struct {
 	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
+	LocationNumber           string    `json:"locationNumber"`           // 소재지번, 건물명칭 및 번호
 	LandType                 string    `json:"landType"`                 // 지목
 	Area                     float64   `json:"area"`                     // 면적
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
 }
 
+type BuildingPartDescription struct {
+	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
+	ReceiptDate              time.Time `json:"receiptDate"`              // 접수
+	BuildingDetails          string    `json:"buildingDetails"`          // 건물내역
+	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
+}
+
 // 전유부분의 건물의 표시 (Exclusive Part of the Building)
 type ExclusivePartDescription struct {
-	BuildingDescription      []BuildingDescription      `json:"buildingDescription"`      // 전유부분의 건물의 표시
+	BuildingPartDescription  []BuildingPartDescription  `json:"buildingDescription"`  // 전유부분의 건물의 표시
 	LandRightDescription     []LandRightDescription     `json:"landRightDescription"`     // 대지권의 표시
 }
 
 type LandRightDescription struct {
 	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
 	LandRightType            string    `json:"landRightType"`            // 대지권의 종류
-	LandRightRatio           float64   `json:"landRightRatio"`           // 대지권 비율
+	LandRightRatio           string   `json:"landRightRatio"`           // 대지권 비율
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
 }
 
 // 갑구 (First Section)
 type FirstSection struct {
-	RankNumber               int       `json:"rankNumber"`               // 순위번호
+	RankNumber               string    `json:"rankNumber"`               // 순위번호
 	RegistrationPurpose      string    `json:"registrationPurpose"`      // 등기목적
 	ReceiptDate              time.Time `json:"receiptDate"`              // 접수
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인

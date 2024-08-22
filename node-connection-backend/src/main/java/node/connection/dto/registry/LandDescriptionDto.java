@@ -1,4 +1,4 @@
-package node.connection.data.registry;
+package node.connection.dto.registry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
