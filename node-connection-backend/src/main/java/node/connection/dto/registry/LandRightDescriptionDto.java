@@ -2,9 +2,9 @@ package node.connection.dto.registry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record LandRightDescription(
+public record LandRightDescriptionDto(
         @JsonProperty("displayNumber") String displayNumber,
         @JsonProperty("landRightType") String landRightType,
-        @JsonProperty("landRightRatio") double landRightRatio,
+        @JsonProperty("landRightRatio") String landRightRatio,
         @JsonProperty("registrationCause") String registrationCause
 ) {}

@@ -1,4 +1,6 @@
-package node.connection.dto.registry;
+package node.connection.dto.registry.request;
+
+import node.connection.dto.registry.RegistryDocumentDto;
 
 public record RegistryCreateRequest(
         String phoneNumber,
@@ -6,6 +8,6 @@ public record RegistryCreateRequest(
         String birthDate,
         String email,
         String password,
-
+        RegistryDocumentDto documentDto
 ) {
 }
