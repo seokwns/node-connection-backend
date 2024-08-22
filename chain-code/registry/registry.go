@@ -19,7 +19,7 @@ type SmartContract struct {
 type RegistryDocument struct {
 	ID                       string                     `json:"id"`                       // 등기부등본 ID
 	TitleSection             []TitleSection             `json:"titleSection"`             // 표제부
-	ExclusivePartDescription []ExclusivePartDescription `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
+	ExclusivePartDescription ExclusivePartDescription   `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
 	FirstSection             []FirstSection             `json:"firstSection"`             // 갑구
 	SecondSection            []SecondSection            `json:"secondSection"`            // 을구
 }
@@ -32,7 +32,7 @@ type TitleSection struct {
 
 type BuildingDescription struct {
 	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
-	ReceiptDate              time.Time `json:"receiptDate"`              // 접수
+	ReceiptDate              string    `json:"receiptDate"`              // 접수
 	LocationNumber           string    `json:"locationNumber"`           // 소재지번, 건물명칭 및 번호
 	BuildingDetails          string    `json:"buildingDetails"`          // 건물내역
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
@@ -42,21 +42,21 @@ type LandDescription struct {
 	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
 	LocationNumber           string    `json:"locationNumber"`           // 소재지번, 건물명칭 및 번호
 	LandType                 string    `json:"landType"`                 // 지목
-	Area                     float64   `json:"area"`                     // 면적
-	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
-}
-
-type BuildingPartDescription struct {
-	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
-	ReceiptDate              time.Time `json:"receiptDate"`              // 접수
-	BuildingDetails          string    `json:"buildingDetails"`          // 건물내역
+	Area                     string    `json:"area"`                     // 면적
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
 }
 
 // 전유부분의 건물의 표시 (Exclusive Part of the Building)
 type ExclusivePartDescription struct {
 	BuildingPartDescription  []BuildingPartDescription  `json:"buildingDescription"`  // 전유부분의 건물의 표시
-	LandRightDescription     []LandRightDescription     `json:"landRightDescription"`     // 대지권의 표시
+	LandRightDescription     []LandRightDescription     `json:"landRightDescription"` // 대지권의 표시
+}
+
+type BuildingPartDescription struct {
+	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
+	ReceiptDate              string    `json:"receiptDate"`              // 접수
+	BuildingDetails          string    `json:"buildingDetails"`          // 건물내역
+	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
 }
 
 type LandRightDescription struct {
@@ -70,14 +70,14 @@ type LandRightDescription struct {
 type FirstSection struct {
 	RankNumber               string    `json:"rankNumber"`               // 순위번호
 	RegistrationPurpose      string    `json:"registrationPurpose"`      // 등기목적
-	ReceiptDate              time.Time `json:"receiptDate"`              // 접수
+	ReceiptDate              string    `json:"receiptDate"`              // 접수
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인
 	HolderAndAdditionalInfo  string    `json:"holderAndAdditionalInfo"`  // 권리자 및 기타사항
 }
 
 // 을구 (Second Section)
 type SecondSection struct {
-	RankNumber               int       `json:"rankNumber"`               // 순위번호
+	RankNumber               string    `json:"rankNumber"`               // 순위번호
 	RegistrationPurpose      string    `json:"registrationPurpose"`      // 등기목적
 	ReceiptDate              time.Time `json:"receiptDate"`              // 접수
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인
