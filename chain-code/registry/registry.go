@@ -18,7 +18,7 @@ type SmartContract struct {
 // 부동산 등기부등본 (Registry Document)
 type RegistryDocument struct {
 	ID                       string                     `json:"id"`                       // 등기부등본 ID
-	TitleSection             []TitleSection             `json:"titleSection"`             // 표제부
+	TitleSection             TitleSection               `json:"titleSection"`             // 표제부
 	ExclusivePartDescription ExclusivePartDescription   `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
 	FirstSection             []FirstSection             `json:"firstSection"`             // 갑구
 	SecondSection            []SecondSection            `json:"secondSection"`            // 을구
@@ -48,7 +48,7 @@ type LandDescription struct {
 
 // 전유부분의 건물의 표시 (Exclusive Part of the Building)
 type ExclusivePartDescription struct {
-	BuildingPartDescription  []BuildingPartDescription  `json:"buildingDescription"`  // 전유부분의 건물의 표시
+	BuildingPartDescription  []BuildingPartDescription  `json:"buildingPartDescription"`  // 전유부분의 건물의 표시
 	LandRightDescription     []LandRightDescription     `json:"landRightDescription"` // 대지권의 표시
 }
 
@@ -117,59 +117,43 @@ func (s *SmartContract) GetRegistryDocumentByID(ctx contractapi.TransactionConte
 	return &document, nil
 }
 
-func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, sectionIndex int, buildingDesc BuildingDescription) error {
+func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingDescription) error {
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if sectionIndex >= len(document.TitleSection) {
-		return fmt.Errorf("TitleSection index %d out of range", sectionIndex)
-	}
-
-	document.TitleSection[sectionIndex].BuildingDescription = append(document.TitleSection[sectionIndex].BuildingDescription, buildingDesc)
+	document.TitleSection.BuildingDescription = append(document.TitleSection.BuildingDescription, buildingDesc)
 	return s.updateRegistryDocument(ctx, document)
 }
 
-func (s *SmartContract) AddLandDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, sectionIndex int, landDesc LandDescription) error {
+func (s *SmartContract) AddLandDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, landDesc LandDescription) error {
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if sectionIndex >= len(document.TitleSection) {
-		return fmt.Errorf("TitleSection index %d out of range", sectionIndex)
-	}
-
-	document.TitleSection[sectionIndex].LandDescription = append(document.TitleSection[sectionIndex].LandDescription, landDesc)
+	document.TitleSection.LandDescription = append(document.TitleSection.LandDescription, landDesc)
 	return s.updateRegistryDocument(ctx, document)
 }
 
-func (s *SmartContract) AddBuildingDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, partIndex int, buildingDesc BuildingDescription) error {
+func (s *SmartContract) AddBuildingDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingPartDescription) error {
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if partIndex >= len(document.ExclusivePartDescription) {
-		return fmt.Errorf("ExclusivePartDescription index %d out of range", partIndex)
-	}
-
-	document.ExclusivePartDescription[partIndex].BuildingDescription = append(document.ExclusivePartDescription[partIndex].BuildingDescription, buildingDesc)
+	document.ExclusivePartDescription.BuildingPartDescription = append(document.ExclusivePartDescription.BuildingPartDescription, buildingDesc)
 	return s.updateRegistryDocument(ctx, document)
 }
 
-func (s *SmartContract) AddLandRightDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, partIndex int, landRightDesc LandRightDescription) error {
+func (s *SmartContract) AddLandRightDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, landRightDesc LandRightDescription) error {
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if partIndex >= len(document.ExclusivePartDescription) {
-		return fmt.Errorf("ExclusivePartDescription index %d out of range", partIndex)
-	}
-
-	document.ExclusivePartDescription[partIndex].LandRightDescription = append(document.ExclusivePartDescription[partIndex].LandRightDescription, landRightDesc)
+	document.ExclusivePartDescription.LandRightDescription = append(document.ExclusivePartDescription.LandRightDescription, landRightDesc)
 	return s.updateRegistryDocument(ctx, document)
 }
 
