@@ -1,6 +1,5 @@
 package node.connection.hyperledger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import node.connection.hyperledger.fabric.Client;
 import node.connection.hyperledger.fabric.FabricConnector;
@@ -38,15 +37,10 @@ public class FabricService {
 
     private final Channel channel;
 
-    private final ObjectMapper objectMapper;
-
-
     public FabricService(
-            @Autowired FabricConfig fabricConfig,
-            @Autowired ObjectMapper objectMapper
+            @Autowired FabricConfig fabricConfig
     ) {
         this.fabricConfig = fabricConfig;
-        this.objectMapper = objectMapper;
         this.caInfo = CAInfo.builder()
                 .name(this.fabricConfig.getCaName())
                 .url(this.fabricConfig.getCaUrl())
@@ -133,5 +127,9 @@ public class FabricService {
 
     public FabricProposalResponse invoke(String fcn, List<String> params) {
         return this.fabricConnector.invoke(fcn, params);
+    }
+
+    public FabricProposalResponse query(String fcn, List<String> params) {
+        return this.fabricConnector.query(fcn, params);
     }
 }
