@@ -2,8 +2,10 @@ package node.connection.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
+import node.connection._core.exception.client.BadRequestException;
 import node.connection._core.exception.server.ServerException;
 import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.entity.FabricRegister;
@@ -11,9 +13,9 @@ import node.connection.hyperledger.FabricConfig;
 import node.connection.hyperledger.fabric.*;
 import node.connection.hyperledger.fabric.ca.*;
 import node.connection.repository.FabricRegisterRepository;
-import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric.sdk.Enrollment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,10 +26,6 @@ public class FabricService {
 
     private final FabricConfig fabricConfig;
 
-    private final CAInfo registryCaInfo;
-
-    private final CAInfo viewerCaInfo;
-
     private final FabricCAConnector registryCAConnector;
 
     private final FabricCAConnector viewerCAConnector;
@@ -36,15 +34,17 @@ public class FabricService {
 
     private final Registrar viewerRegistrar;
 
-    private FabricConnector fabricConnector;
+    private final FabricConnector fabricConnector;
 
     private NetworkConfig networkConfig;
 
-    private Client client;
-
-    private final Channel channel;
+    private Client rootClient;
 
     private final ObjectMapper objectMapper;
+
+    private final SimpleModule simpleModule;
+
+    private final PasswordEncoder passwordEncoder;
 
     private final FabricRegisterRepository fabricRegisterRepository;
 
@@ -57,28 +57,32 @@ public class FabricService {
     public FabricService(
             @Autowired FabricConfig fabricConfig,
             @Autowired ObjectMapper objectMapper,
+            @Autowired SimpleModule simpleModule,
+            @Autowired PasswordEncoder passwordEncoder,
             @Autowired FabricRegisterRepository fabricRegisterRepository
     ) {
         this.fabricConfig = fabricConfig;
         this.objectMapper = objectMapper;
+        this.simpleModule = simpleModule;
+        this.passwordEncoder = passwordEncoder;
         this.fabricRegisterRepository = fabricRegisterRepository;
 
-        this.registryCaInfo = CAInfo.builder()
+        CAInfo registryCaInfo = CAInfo.builder()
                 .name(this.fabricConfig.getRegistryCaName())
                 .url(this.fabricConfig.getRegistryCaUrl())
                 .pemFile(this.fabricConfig.getRegistryCaPemFilePath())
                 .allowAllHostNames(true)
                 .build();
 
-        this.viewerCaInfo = CAInfo.builder()
+        CAInfo viewerCaInfo = CAInfo.builder()
                 .name(this.fabricConfig.getViewerCaName())
                 .url(this.fabricConfig.getViewerCaUrl())
                 .pemFile(this.fabricConfig.getViewerCaPemFilePath())
                 .allowAllHostNames(true)
                 .build();
 
-        this.registryCAConnector = new FabricCAConnector(this.registryCaInfo);
-        this.viewerCAConnector = new FabricCAConnector(this.viewerCaInfo);
+        this.registryCAConnector = new FabricCAConnector(registryCaInfo);
+        this.viewerCAConnector = new FabricCAConnector(viewerCaInfo);
 
         CAUser admin = CAUser.builder()
                 .name(this.fabricConfig.getCaAdminName())
@@ -88,7 +92,8 @@ public class FabricService {
         this.registrar = this.registryCAConnector.registrarEnroll(admin);
         this.viewerRegistrar = this.viewerCAConnector.registrarEnroll(admin);
         String registryRegistrarEnrollment = this.registrar.getEnrollment().serialize(this.objectMapper);
-        this.fabricRegisterRepository.save(FabricRegister.of(this.registrar, admin.getSecret(), registryRegistrarEnrollment));
+        String encodedSecret = passwordEncoder.encode(admin.getSecret());
+        this.fabricRegisterRepository.save(FabricRegister.of(this.registrar, encodedSecret, registryRegistrarEnrollment));
         log.info("fabric-ca admin 계정 enroll 완료");
 
         String registryId = getId(REGISTRY_MSP, this.fabricConfig.getRootNumber());
@@ -103,65 +108,62 @@ public class FabricService {
                 .build();
 
         String rootEnrollment = caEnrollment.serialize(objectMapper);
-        this.fabricRegisterRepository.save(FabricRegister.of(client, this.fabricConfig.getRootPassword(), rootEnrollment));
+        encodedSecret = passwordEncoder.encode(this.fabricConfig.getRootPassword());
+        this.fabricRegisterRepository.save(FabricRegister.of(client, encodedSecret, rootEnrollment));
         log.info("fabric-ca root 계정 enroll 완료");
 
         this.initialize();
         log.info("Fabric client 및 네트워크 설정 완료");
-        log.debug("client: {}", this.client);
+        log.debug("client: {}", this.rootClient);
 
-        this.fabricConnector = new FabricConnector(this.client);
+        this.fabricConnector = new FabricConnector(this.rootClient);
         log.info("Fabric Connector 생성 완료");
 
-        this.channel = fabricConnector.connectToChannel(this.networkConfig);
+        fabricConnector.connectToChannel(this.networkConfig);
         log.info("채널 연결 완료");
     }
 
-    public void registerAsViewer(String phoneNumber, String secret) {
+    public void registerToViewerMSP(String phoneNumber, String secret) {
         String id = getId(VIEWER_MSP, phoneNumber);
         String response = this.viewerCAConnector.register(id, secret, this.viewerRegistrar);
 
         if (response == null) {
-            throw new ServerException(ExceptionStatus.ALREADY_CA_REGISTERED);
+            throw new BadRequestException(ExceptionStatus.ALREADY_CA_REGISTERED);
         }
 
         Enrollment e = this.viewerCAConnector.enroll(id, secret);
-        CAEnrollment caEnrollment = CAEnrollment.of(e);
-
-        Client client = Client.builder()
-                .name(id)
-                .mspId(VIEWER_MSP)
-                .enrollment(caEnrollment)
-                .build();
-
-        String enrollment = client.getEnrollment().serialize(objectMapper);
-        this.fabricRegisterRepository.save(FabricRegister.of(client, secret, enrollment));
+        this.register(VIEWER_MSP, id, secret, e);
     }
 
-    public void registerAsRegister(String number, String secret) {
+    public void registerToRegistryMSP(String number, String secret) {
         String id = getId(REGISTRY_MSP, number);
         String response = this.registryCAConnector.register(id, secret, this.registrar);
         if (response == null) {
-            throw new ServerException(ExceptionStatus.ALREADY_CA_REGISTERED);
+            throw new BadRequestException(ExceptionStatus.ALREADY_CA_REGISTERED);
         }
 
         Enrollment e = this.registryCAConnector.enroll(id, secret);
+        this.register(REGISTRY_MSP, id, secret, e);
+    }
+
+    private void register(String msp, String id, String secret, Enrollment e) {
         CAEnrollment caEnrollment = CAEnrollment.of(e);
 
         Client client = Client.builder()
                 .name(id)
-                .mspId(REGISTRY_MSP)
+                .mspId(msp)
                 .enrollment(caEnrollment)
                 .build();
 
         String enrollment = client.getEnrollment().serialize(objectMapper);
-        this.fabricRegisterRepository.save(FabricRegister.of(client, secret, enrollment));
+        String encodedSecret = passwordEncoder.encode(secret);
+        this.fabricRegisterRepository.save(FabricRegister.of(client, encodedSecret, enrollment));
     }
 
     private void initialize() {
         String id = getId(this.fabricConfig.getRootMsp(), this.fabricConfig.getRootNumber());
         FabricRegister register = this.fabricRegisterRepository.findById(id)
-                .orElseThrow(() -> new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new ServerException(ExceptionStatus.NO_FABRIC_CA_DATA));
 
         CAEnrollment enrollment = CAEnrollment.deserialize(this.objectMapper, register.getEnrollment());
 
@@ -193,7 +195,7 @@ public class FabricService {
                 .orderer(orderer)
                 .build();
 
-        this.client = Client.of(register, enrollment);
+        this.rootClient = Client.of(register, enrollment);
         this.networkConfig = networkConfig;
     }
 
@@ -201,13 +203,8 @@ public class FabricService {
         FabricRegister register = this.fabricRegisterRepository.findById(id)
                 .orElseThrow(() -> new ServerException(ExceptionStatus.NO_FABRIC_CA_DATA));
 
-        try {
-            CAEnrollment enrollment = this.objectMapper.readValue(register.getEnrollment(), CAEnrollment.class);
-            return new FabricConnector(Client.of(register, enrollment));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new ServerException(ExceptionStatus.JSON_PROCESSING_EXCEPTION);
-        }
+        CAEnrollment enrollment = CAEnrollment.deserialize(this.objectMapper, register.getEnrollment());
+        return new FabricConnector(Client.of(register, enrollment));
     }
 
     public void setChaincode(String name, String version) {
