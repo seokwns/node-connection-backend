@@ -63,10 +63,6 @@ public class CAEnrollment implements Enrollment, Serializable {
 
     public String serialize(ObjectMapper mapper) {
         try {
-            SimpleModule simpleModule = new SimpleModule();
-            simpleModule.addSerializer(CAEnrollment.class, new Serializer());
-            mapper.registerModule(simpleModule);
-
             return mapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -76,10 +72,6 @@ public class CAEnrollment implements Enrollment, Serializable {
 
     public static CAEnrollment deserialize(ObjectMapper mapper, String json) {
         try {
-            SimpleModule simpleModule = new SimpleModule();
-            simpleModule.addDeserializer(CAEnrollment.class, new DeSerializer());
-            mapper.registerModule(simpleModule);
-
             return mapper.readValue(json, CAEnrollment.class);
         } catch (IOException e) {
             e.printStackTrace();
