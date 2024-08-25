@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public record ExclusivePartDescription(
-        @JsonProperty("buildingDescription") List<BuildingDescription> buildingDescription,
-        @JsonProperty("landRightDescription") List<LandRightDescription> landRightDescription
+public record ExclusivePartDescriptionDto(
+        @JsonProperty("buildingPartDescription") List<BuildingPartDescriptionDto> buildingPartDescriptionDto,
+        @JsonProperty("landRightDescription") List<LandRightDescriptionDto> landRightDescriptionDto
 ) {}

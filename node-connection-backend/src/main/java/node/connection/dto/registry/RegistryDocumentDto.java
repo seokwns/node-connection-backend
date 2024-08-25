@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public record RegistryDocument(
+public record RegistryDocumentDto(
         @JsonProperty("id") String id,
-        @JsonProperty("titleSection") List<TitleSection> titleSection,
-        @JsonProperty("exclusivePartDescription") List<ExclusivePartDescription> exclusivePartDescription,
-        @JsonProperty("firstSection") List<FirstSection> firstSection,
-        @JsonProperty("secondSection") List<SecondSection> secondSection
+        @JsonProperty("titleSection") TitleSectionDto titleSectionDto,
+        @JsonProperty("exclusivePartDescription") ExclusivePartDescriptionDto exclusivePartDescriptionDto,
+        @JsonProperty("firstSection") List<FirstSectionDto> firstSectionDto,
+        @JsonProperty("secondSection") List<SecondSectionDto> secondSectionDto
 ) {}
 

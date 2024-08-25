@@ -57,6 +57,23 @@ function setup_requirements() {
     else
         echo -e "${GREEN}Node.js is already installed.${NC}"
     fi
+
+    # Check if libindy is installed
+    if ! dpkg -l | grep -q libindy; then
+        echo -e "${YELLOW}libindy is not installed. Installing libindy...${NC}"
+
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88
+
+        sudo add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic master"
+
+        sudo apt-get update
+
+        sudo apt-get install -y libindy
+
+        echo -e "${GREEN}libindy has been installed successfully.${NC}"
+    else
+        echo -e "${GREEN}libindy is already installed.${NC}"
+    fi
 }
 
 function setup_hyperledger_fabric() {

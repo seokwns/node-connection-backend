@@ -24,11 +24,11 @@ public class WalletConfigFactory {
                 .toString();
     }
 
-    public String getCourtWalletConfig(String court, String department, String location) {
+    public String getCourtWalletConfig(String court, String support, String office) {
         JSONObject storageConfig = new JSONObject().put("path", this.courtWalletStorage);
 
         return new JSONObject()
-                .put("id", this.getCourtId(court, department, location))
+                .put("id", this.getCourtId(court, support, office))
                 .put("storage_config", storageConfig)
                 .toString();
     }
@@ -39,7 +39,7 @@ public class WalletConfigFactory {
                 .toString();
     }
 
-    public String getCourtId(String court, String department, String location) {
-        return court + "_" + department + "_" + location;
+    public String getCourtId(String court, String support, String office) {
+        return court + "_" + support + "_" + office;
     }
 }

@@ -62,7 +62,7 @@ type BuildingPartDescription struct {
 type LandRightDescription struct {
 	DisplayNumber            string    `json:"displayNumber"`            // 표시번호
 	LandRightType            string    `json:"landRightType"`            // 대지권의 종류
-	LandRightRatio           string   `json:"landRightRatio"`           // 대지권 비율
+	LandRightRatio           string    `json:"landRightRatio"`           // 대지권 비율
 	RegistrationCause        string    `json:"registrationCause"`        // 등기원인 및 기타사항
 }
 
