@@ -8,6 +8,6 @@ public record RegistryCreateRequest(
         String birthDate,
         String email,
         String password,
-        RegistryDocumentDto documentDto
+        RegistryDocumentDto document
 ) {
 }
