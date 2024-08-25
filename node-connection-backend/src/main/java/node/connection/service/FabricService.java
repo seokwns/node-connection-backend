@@ -220,9 +220,13 @@ public class FabricService {
     }
 
     public RegistryDocumentDto getRegistryDocumentById(String id) {
+        return this.getRegistryDocumentById(this.fabricConnector, id);
+    }
+
+    public RegistryDocumentDto getRegistryDocumentById(FabricConnector connector, String id) {
         List<String> params = List.of(id);
-        this.fabricConnector.setChaincode("registry", "1.0.0");
-        FabricProposalResponse response = this.fabricConnector.query("GetRegistryDocumentByID", params);
+        connector.setChaincode("registry", "1.0.0");
+        FabricProposalResponse response = connector.query("GetRegistryDocumentByID", params);
         log.debug(String.valueOf(response));
 
         String payload = response.getPayload();
