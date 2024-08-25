@@ -15,14 +15,18 @@ public enum ExceptionStatus {
     OBJECT_DESERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1003", ""),
     JSON_PROCESSING_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1004", "JSON 파싱 에러 발생"),
     FILE_IO_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1005", "파일 입출력 과정에서 에러가 발생했습니다."),
+    JWT_DECODE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1006", "JWT 디코드 과정에서 에러가 발생했습니다."),
 
     INDY_INITIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2000", "Indy 초기화 중 에러가 발생했습니다."),
     WALLET_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2001", "지갑 생성 중 에러가 발생했습니다."),
     WALLET_OPEN_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2002", "지갑 조회 중 에러가 발생했습니다."),
+    WALLET_CLOSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2003", "지갑 종료 중 에러가 발생했습니다."),
 
     FABRIC_CA_CONFIGURATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3000", "CA 초기화 중 에러가 발생했습니다."),
     FABRIC_CA_REGISTER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3001", "CA 가입 중 에러가 발생했습니다."),
     FABRIC_CA_ENROLL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3002", "CA 등록 중 에러가 발생했습니다."),
+    NO_FABRIC_CA_DATA(HttpStatus.INTERNAL_SERVER_ERROR, "3003", "CA 가입 데이터가 없습니다."),
+    ALREADY_CA_REGISTERED(HttpStatus.BAD_REQUEST, "3004", "이미 CA에 가입되었습니다."),
 
     FABRIC_CONNECTION_CONFIGURATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3001", "Ledger 연결 초기화 중 에러가 발생했습니다."),
     FABRIC_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3002", "Ledger 연결 중 에러가 발생했습니다."),
