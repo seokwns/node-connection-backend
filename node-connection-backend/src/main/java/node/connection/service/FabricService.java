@@ -161,7 +161,7 @@ public class FabricService {
     private void initialize() {
         String id = getId(this.fabricConfig.getRootMsp(), this.fabricConfig.getRootNumber());
         FabricRegister register = this.fabricRegisterRepository.findById(id)
-                .orElseThrow(() -> new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new ServerException(ExceptionStatus.NO_FABRIC_CA_DATA));
 
         CAEnrollment enrollment = CAEnrollment.deserialize(this.objectMapper, register.getEnrollment());
 
