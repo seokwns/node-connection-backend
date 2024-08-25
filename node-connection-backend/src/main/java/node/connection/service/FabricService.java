@@ -117,7 +117,7 @@ public class FabricService {
         log.info("채널 연결 완료");
     }
 
-    public void registerAsViewer(String phoneNumber, String secret) {
+    public void registerToViewerMSP(String phoneNumber, String secret) {
         String id = getId(VIEWER_MSP, phoneNumber);
         String response = this.viewerCAConnector.register(id, secret, this.viewerRegistrar);
 
@@ -138,7 +138,7 @@ public class FabricService {
         this.fabricRegisterRepository.save(FabricRegister.of(client, secret, enrollment));
     }
 
-    public void registerAsRegister(String number, String secret) {
+    public void registerToRegistryMSP(String number, String secret) {
         String id = getId(REGISTRY_MSP, number);
         String response = this.registryCAConnector.register(id, secret, this.registrar);
         if (response == null) {

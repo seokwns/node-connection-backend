@@ -45,7 +45,7 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserRegisterRequest request) {
-        this.fabricService.registerAsViewer(request.phoneNumber(), request.password());
+        this.fabricService.registerToViewerMSP(request.phoneNumber(), request.password());
         this.walletService.createUserWallet(new UserWalletCreateRequest(request.phoneNumber(), request.password()));
         return ResponseEntity.ok().body(Response.success(null));
     }
