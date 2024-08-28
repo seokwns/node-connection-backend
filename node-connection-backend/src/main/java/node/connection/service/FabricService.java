@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.client.BadRequestException;
 import node.connection._core.exception.server.ServerException;
+import node.connection._core.security.CustomUserDetails;
 import node.connection.dto.registry.RegistryDocumentDto;
+import node.connection.dto.wallet.UserWalletCreateRequest;
 import node.connection.entity.UserAccount;
 import node.connection.entity.constant.Role;
 import node.connection.hyperledger.FabricConfig;
@@ -47,6 +49,9 @@ public class FabricService {
 
     private final UserAccountRepository fabricRegisterRepository;
 
+    private final WalletService walletService;
+
+
     public final static String VIEWER_MSP = "ViewerMSP";
 
     public final static String REGISTRY_MSP = "RegistryMSP";
@@ -57,12 +62,14 @@ public class FabricService {
             @Autowired FabricConfig fabricConfig,
             @Autowired ObjectMapper objectMapper,
             @Autowired PasswordEncoder passwordEncoder,
-            @Autowired UserAccountRepository fabricRegisterRepository
+            @Autowired UserAccountRepository fabricRegisterRepository,
+            @Autowired WalletService walletService
     ) {
         this.fabricConfig = fabricConfig;
         this.objectMapper = objectMapper;
         this.passwordEncoder = passwordEncoder;
         this.fabricRegisterRepository = fabricRegisterRepository;
+        this.walletService = walletService;
 
         CAInfo registryCaInfo = CAInfo.builder()
                 .name(this.fabricConfig.getRegistryCaName())
@@ -120,6 +127,22 @@ public class FabricService {
         log.info("채널 연결 완료");
     }
 
+    public void register(CustomUserDetails userDetails) {
+        String name = userDetails.getUsername();
+        String mspId = name.split(ID_DELIMITER)[0];
+        String number = name.split(ID_DELIMITER)[1];
+        String password = userDetails.getPassword();
+
+        if (mspId.equals(VIEWER_MSP)) {
+            registerToViewerMSP(number, password);
+        }
+        else {
+            registerToRegistryMSP(number, password);
+        }
+
+        walletService.createUserWallet(new UserWalletCreateRequest(number, password));
+    }
+
     public void registerToViewerMSP(String phoneNumber, String secret) {
         String id = getId(VIEWER_MSP, phoneNumber);
         String response = this.viewerCAConnector.register(id, secret, HFCAClient.HFCA_TYPE_USER, this.viewerRegistrar);
@@ -129,7 +152,7 @@ public class FabricService {
         }
 
         Enrollment e = this.viewerCAConnector.enroll(id, secret);
-        this.register(VIEWER_MSP, id, phoneNumber, secret, e);
+        this.saveRegister(VIEWER_MSP, id, phoneNumber, secret, e);
     }
 
     public void registerToRegistryMSP(String number, String secret) {
@@ -140,10 +163,10 @@ public class FabricService {
         }
 
         Enrollment e = this.registryCAConnector.enroll(id, secret);
-        this.register(REGISTRY_MSP, id, number, secret, e);
+        this.saveRegister(REGISTRY_MSP, id, number, secret, e);
     }
 
-    private void register(String msp, String id, String number, String secret, Enrollment e) {
+    private void saveRegister(String msp, String id, String number, String secret, Enrollment e) {
         CAEnrollment caEnrollment = CAEnrollment.of(e);
 
         Client client = Client.builder()

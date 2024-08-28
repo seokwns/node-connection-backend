@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum Role {
+    ANONYMOUS("ROLE_ANONYMOUS"),
     VIEWER("ROLE_VIEWER"),
     REGISTRY("ROLE_REGISTRY"),
     ROOT("ROLE_ROOT"),
