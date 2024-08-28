@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.client.NotFoundException;
 import node.connection.entity.UserAccount;
+import node.connection.entity.constant.Role;
 import node.connection.repository.UserAccountRepository;
 import node.connection.service.FabricService;
 import org.json.JSONObject;
@@ -51,20 +52,26 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         JSONObject jsonObject = new JSONObject(decodedJWT);
 
         String sub = jsonObject.getString("sub");
-        String msp = sub.split(":")[0];
+        String mspId = sub.split(":")[0];
         String number = sub.split(":")[1];
-        String password = sub.split(":")[2];
-        String name = msp + FabricService.ID_DELIMITER + number;
+        String secret = sub.split(":")[2];
+        String name = mspId + FabricService.ID_DELIMITER + number;
 
-        userAccountRepository.findByName(name)
-                .orElseThrow(() -> new NotFoundException(ExceptionStatus.USER_NOT_FOUND));
+        Role role = Role.ANONYMOUS;
+        if (!request.getRequestURI().contains("/user/register")) {
+            UserAccount userAccount = userAccountRepository.findByName(name)
+                    .orElseThrow(() -> new NotFoundException(ExceptionStatus.USER_NOT_FOUND));
 
-        setAuthentication(name);
+            role = userAccount.getRole();
+        }
+
+        setAuthentication(mspId, number, secret, role);
         chain.doFilter(request, response);
     }
 
-    private void setAuthentication(String name) {
-        UserAccount userAccount = UserAccount.builder().name(name).build();
+    private void setAuthentication(String mspId, String number, String secret, Role role) {
+        String id = mspId + ".api." + number;
+        UserAccount userAccount = UserAccount.builder().name(id).mspId(mspId).secret(secret).role(role).build();
         CustomUserDetails userDetails = new CustomUserDetails(userAccount);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
