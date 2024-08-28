@@ -1,25 +1,64 @@
-package node.connection.config;
+package node.connection._core.config;
 
+import node.connection._core.exception.ExceptionResponseWriter;
+import node.connection._core.exception.ExceptionStatus;
+import node.connection._core.exception.client.ForbiddenException;
+import node.connection._core.exception.client.UnauthorizedException;
+import node.connection._core.security.CorsConfig;
+import node.connection._core.security.JweDecoder;
+import node.connection._core.security.JwtAuthenticationFilter;
+import node.connection._core.security.JwtExceptionFilter;
+import node.connection.repository.UserAccountRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final AuthenticationConfiguration authenticationConfiguration;
+    private final JweDecoder jweDecoder;
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration) {
+    private final UserAccountRepository userAccountRepository;
 
-        this.authenticationConfiguration = authenticationConfiguration;
+    private final ExceptionResponseWriter responseWriter;
 
+    public SecurityConfig(@Autowired JweDecoder jweDecoder,
+                          @Autowired UserAccountRepository userAccountRepository,
+                          @Autowired ExceptionResponseWriter responseWriter
+    ) {
+        this.jweDecoder = jweDecoder;
+        this.userAccountRepository = userAccountRepository;
+        this.responseWriter = responseWriter;
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring()
+                .requestMatchers(
+                        PathRequest
+                                .toStaticResources()
+                                .atCommonLocations()
+                )
+                .requestMatchers(
+                        new AntPathRequestMatcher("/static/css/**"),
+                        new AntPathRequestMatcher("/static/scripts/**")
+                );
     }
 
     @Bean
@@ -36,32 +75,47 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.headers((headers) -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 
-        //csrf disable
-        http
-                .csrf((auth) -> auth.disable());
+        http.csrf(CsrfConfigurer::disable);
 
-        //From 로그인 방식 disable
-        http
-                .formLogin((auth) -> auth.disable());
+        http.cors((cors) -> cors.configurationSource(CorsConfig.getConfigurationSource()));
 
-        //http basic 인증 방식 disable
-        http
-                .httpBasic((auth) -> auth.disable());
+        http.sessionManagement((sessionManagement) -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
+        http.formLogin(FormLoginConfigurer::disable);
 
-        http
-                .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/login", "/", "/join" , "/api/decode-jwe" ).permitAll()
-                        .requestMatchers("/admin").hasRole("ADMIN")
+        http.httpBasic(HttpBasicConfigurer::disable);
 
-                        .anyRequest().authenticated());
+        http.addFilterBefore(
+                new JwtAuthenticationFilter(authenticationManager(http.getSharedObject(AuthenticationConfiguration.class)), jweDecoder, userAccountRepository),
+                UsernamePasswordAuthenticationFilter.class
+        );
 
+        http.addFilterBefore(
+                new JwtExceptionFilter(responseWriter),
+                JwtAuthenticationFilter.class
+        );
 
-        //세션 설정
-        http
-                .sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.exceptionHandling((exceptionHandling) ->
+                exceptionHandling.authenticationEntryPoint((request, response, authException) -> {
+                    responseWriter.write(response, new UnauthorizedException(ExceptionStatus.UNAUTHORIZED));
+                })
+        );
+
+        http.exceptionHandling((exceptionHandling) ->
+                exceptionHandling.accessDeniedHandler((request, response, accessDeniedException) -> {
+                    responseWriter.write(response, new ForbiddenException(ExceptionStatus.FORBIDDEN));
+                })
+        );
+
+        http.authorizeHttpRequests((authorizeHttpRequests) ->
+                authorizeHttpRequests
+//                        .requestMatchers(
+//                                new AntPathRequestMatcher("/**")
+//                        ).permitAll()
+                        .anyRequest().authenticated()
+        );
 
         return http.build();
     }

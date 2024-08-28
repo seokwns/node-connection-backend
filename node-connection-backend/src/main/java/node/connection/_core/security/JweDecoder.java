@@ -1,4 +1,4 @@
-package node.connection.jwt;
+package node.connection._core.security;
 
 
 import com.nimbusds.jose.JOSEException;
