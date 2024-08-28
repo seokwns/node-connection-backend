@@ -3,9 +3,7 @@ package node.connection.hyperledger.fabric.ca;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.server.ServerException;
-import node.connection.entity.FabricRegister;
-import node.connection.hyperledger.fabric.Client;
-import node.connection.repository.FabricRegisterRepository;
+import node.connection.entity.UserAccount;
 import org.hyperledger.fabric.sdk.Enrollment;
 import org.hyperledger.fabric.sdk.exception.CryptoException;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
@@ -82,11 +80,11 @@ public class FabricCAConnector {
         }
     }
 
-    public String register(String id, String secret, Registrar registrar) {
+    public String register(String id, String secret, String role, Registrar registrar) {
         try {
             RegistrationRequest request = new RegistrationRequest(id);
             request.setSecret(secret);
-            request.addAttribute(new Attribute("role", HFCAClient.HFCA_TYPE_CLIENT));
+            request.addAttribute(new Attribute("role", role));
 
             String response = null;
             try {
@@ -104,7 +102,7 @@ public class FabricCAConnector {
         return this.enroll(enrollment.getName(), enrollment.getSecret());
     }
 
-    public Enrollment enroll(FabricRegister register) {
+    public Enrollment enroll(UserAccount register) {
         return this.enroll(register.getName(), register.getSecret());
     }
 

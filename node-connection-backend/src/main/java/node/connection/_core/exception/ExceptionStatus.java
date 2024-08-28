@@ -9,13 +9,16 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ExceptionStatus {
 
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1000", "서버에서 알 수 없는 에러가 발생했습니다."),
-    INVALID_METHOD_ARGUMENTS_ERROR(HttpStatus.BAD_REQUEST, "1001", ""),
-    OBJECT_SERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1002", ""),
-    OBJECT_DESERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1003", ""),
-    JSON_PROCESSING_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1004", "JSON 파싱 에러 발생"),
-    FILE_IO_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1005", "파일 입출력 과정에서 에러가 발생했습니다."),
-    JWT_DECODE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1006", "JWT 디코드 과정에서 에러가 발생했습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "1000", "인증되지 않았습니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "1001", "권한이 없습니다."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1002", "서버에서 알 수 없는 에러가 발생했습니다."),
+    INVALID_METHOD_ARGUMENTS_ERROR(HttpStatus.BAD_REQUEST, "1003", ""),
+    OBJECT_SERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1004", ""),
+    OBJECT_DESERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1005", ""),
+    JSON_PROCESSING_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1006", "JSON 파싱 에러 발생"),
+    FILE_IO_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "1007", "파일 입출력 과정에서 에러가 발생했습니다."),
+    JWT_DECODE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1008", "JWT 디코드 과정에서 에러가 발생했습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "1009", "존재하지 않는 유저입니다."),
 
     INDY_INITIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2000", "Indy 초기화 중 에러가 발생했습니다."),
     WALLET_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2001", "지갑 생성 중 에러가 발생했습니다."),
