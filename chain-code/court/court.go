@@ -356,7 +356,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 	request.Finalized = true
 	request.FinalizeDate = time.Now().Format(time.RFC3339)
 	court.FinalizedRequests = append(court.FinalizedRequests, *request)
-	courtJSON, err = json.Marshal(court)
+	courtJSON, err := json.Marshal(court)
 	if err != nil {
 		return fmt.Errorf("failed to marshal court JSON: %v", err)
 	}
