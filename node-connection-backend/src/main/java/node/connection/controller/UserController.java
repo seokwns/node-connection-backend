@@ -4,18 +4,13 @@ import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
 import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.dto.registry.request.FindUserRegistryDocumentsRequest;
-import node.connection.dto.user.request.UserRegisterRequest;
-import node.connection.dto.wallet.UserWalletCreateRequest;
 import node.connection.service.FabricService;
 import node.connection.service.UserService;
 import node.connection.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -48,6 +43,12 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@AuthenticationPrincipal CustomUserDetails userDetails) {
         this.fabricService.register(userDetails);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @DeleteMapping("")
+    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        this.fabricService.delete(userDetails);
         return ResponseEntity.ok().body(Response.success(null));
     }
 }

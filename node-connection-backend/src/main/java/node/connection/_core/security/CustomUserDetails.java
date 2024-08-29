@@ -24,4 +24,8 @@ public record CustomUserDetails(UserAccount userAccount) implements UserDetails 
     public String getUsername() {
         return userAccount.getName();
     }
+
+    public UserAccount getUserAccount() {
+        return userAccount;
+    }
 }

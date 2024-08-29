@@ -30,6 +30,8 @@ public enum ExceptionStatus {
     FABRIC_CA_ENROLL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3002", "CA 등록 중 에러가 발생했습니다."),
     NO_FABRIC_CA_DATA(HttpStatus.INTERNAL_SERVER_ERROR, "3003", "CA 가입 데이터가 없습니다."),
     ALREADY_CA_REGISTERED(HttpStatus.BAD_REQUEST, "3004", "이미 CA에 가입되었습니다."),
+    FABRIC_CA_REVOKE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3005", "CA 삭제 중 에러가 발생했습니다."),
+    FABRIC_CA_UPDATE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3006", "CA 업데이트 중 에러가 발생했습니다."),
 
     FABRIC_CONNECTION_CONFIGURATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3001", "Ledger 연결 초기화 중 에러가 발생했습니다."),
     FABRIC_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3002", "Ledger 연결 중 에러가 발생했습니다."),

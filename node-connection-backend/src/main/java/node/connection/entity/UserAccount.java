@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import node.connection.entity.constant.Role;
 import node.connection.hyperledger.fabric.Client;
 import node.connection.hyperledger.fabric.ca.Registrar;
+import node.connection.service.FabricService;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -95,9 +96,14 @@ public class UserAccount {
     }
 
     public static Role getRoleByMspId(String mspId) {
-        if (Objects.equals(mspId, "ViewerMsp")) {
+        if (Objects.equals(mspId, FabricService.VIEWER_MSP)) {
             return Role.VIEWER;
         }
-        else return Role.REGISTRY;
+        else if (Objects.equals(mspId, FabricService.REGISTRY_MSP)) {
+            return Role.REGISTRY;
+        }
+        else {
+            return Role.ANONYMOUS;
+        }
     }
 }
