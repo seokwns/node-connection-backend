@@ -374,13 +374,13 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 	return nil
 }
 
-// 유틸리티 함수: 클라이언트 ID 가져오기
 func (s *SmartContract) getClientID(ctx contractapi.TransactionContextInterface) (string, error) {
-	clientID, err := ctx.GetClientIdentity().GetID()
+	certBase64, err := ctx.GetClientIdentity().GetX509Certificate()
 	if err != nil {
-		return "", fmt.Errorf("failed to get client ID: %v", err)
+		return "", fmt.Errorf("failed to get client certificate: %v", err)
 	}
-	return clientID, nil
+
+	return certBase64.Subject.CommonName, nil
 }
 
 func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterface, requestID string, targetCourtID string) error {
