@@ -60,16 +60,16 @@ public class Court {
 
     public static Court of(CourtCreateRequest request) {
         CourtKey courtKey = CourtKey.builder()
-                .court(request.court())
-                .support(request.support())
-                .office(request.office())
+                .court(request.getCourt())
+                .support(request.getSupport())
+                .office(request.getOffice())
                 .build();
 
         return Court.builder()
                 .key(courtKey)
-                .phoneNumber(request.phoneNumber())
-                .address(request.address())
-                .faxNumber(request.faxNumber())
+                .phoneNumber(request.getPhoneNumber())
+                .address(request.getAddress())
+                .faxNumber(request.getFaxNumber())
                 .build();
     }
 }

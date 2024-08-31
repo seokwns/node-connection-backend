@@ -4,6 +4,7 @@ import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
 import node.connection.dto.court.request.AddCourtMemberRequest;
 import node.connection.dto.court.request.CourtCreateRequest;
+import node.connection.dto.court.request.DeleteCourtMemberRequest;
 import node.connection.dto.court.response.FabricCourt;
 import node.connection.service.CourtService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +37,21 @@ public class CourtController {
         return ResponseEntity.ok().body(Response.success(null));
     }
 
-    @PostMapping("/member/add")
+    @PostMapping("/member")
     public ResponseEntity<?> addCourtMember(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody AddCourtMemberRequest request
     ) {
         this.courtService.addCourtMember(userDetails, request);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @DeleteMapping("/member")
+    public ResponseEntity<?> deleteCourtMember(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody DeleteCourtMemberRequest request
+    ) {
+        this.courtService.deleteCourtMember(userDetails, request);
         return ResponseEntity.ok().body(Response.success(null));
     }
 }

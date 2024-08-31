@@ -8,6 +8,7 @@ import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
 import node.connection.dto.court.request.AddCourtMemberRequest;
 import node.connection.dto.court.request.CourtCreateRequest;
+import node.connection.dto.court.request.DeleteCourtMemberRequest;
 import node.connection.dto.court.response.FabricCourt;
 import node.connection.dto.wallet.CourtWalletCreateRequest;
 import node.connection.entity.Court;
@@ -60,30 +61,37 @@ public class CourtService {
 
     @Transactional
     public void createCourt(CustomUserDetails userDetails, CourtCreateRequest request) {
-        String courtId = request.court() + "_" + request.support() + "_" + request.office();
+        String courtId = request.getCourtId();
 
         Court court = Court.of(request);
         this.courtRepository.save(court);
 
-        CourtWalletConfig walletConfig = CourtWalletConfig.of(courtId, request.walletPassword(), court);
+        CourtWalletConfig walletConfig = CourtWalletConfig.of(courtId, request.getWalletPassword(), court);
         this.walletConfigRepository.save(walletConfig);
 
         List<Jurisdiction> jurisdictions = new ArrayList<>();
-        request.jurisdictions().forEach(jurisdiction -> {
+        request.getJurisdictions().forEach(jurisdiction -> {
             jurisdictions.add(Jurisdiction.of(jurisdiction, court));
         });
         this.jurisdictionRepository.saveAll(jurisdictions);
 
-        this.walletService.createCourtWallet(new CourtWalletCreateRequest(request.court(), request.support(), request.office(), request.walletPassword()));
+        this.walletService.createCourtWallet(
+                new CourtWalletCreateRequest(
+                        request.getCourt(),
+                        request.getSupport(),
+                        request.getOffice(),
+                        request.getWalletPassword()
+                )
+        );
 
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
         connector.setChaincode("court", "1.0.0");
 
         List<String> params = List.of(
                 courtId,
-                request.court(),
-                request.support(),
-                request.office(),
+                request.getCourt(),
+                request.getSupport(),
+                request.getOffice(),
                 userDetails.getUsername()
         );
         FabricProposalResponse response = connector.invoke("RegistryCourt", params);
@@ -112,16 +120,31 @@ public class CourtService {
     }
 
     public void addCourtMember(CustomUserDetails userDetails, AddCourtMemberRequest request) {
-        String courtId = request.court() + "_" + request.support() + "_" + request.office();
+        FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
+        connector.setChaincode("court", "1.0.1");
 
+        List<String> params = List.of(
+                request.getCourtId(),
+                request.getMemberId()
+        );
+        FabricProposalResponse response = connector.invoke("AddMember", params);
+
+        if (!response.getSuccess()) {
+            log.error("add court member error: {}, payload: {}", response.getMessage(), response.getPayload());
+            throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
+        }
+    }
+
+    public void deleteCourtMember(CustomUserDetails userDetails, DeleteCourtMemberRequest request) {
+        String courtId = request.getCourtId();
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
         connector.setChaincode("court", "1.0.1");
 
         List<String> params = List.of(
                 courtId,
-                request.memberId()
+                request.getMemberId()
         );
-        FabricProposalResponse response = connector.invoke("AddMember", params);
+        FabricProposalResponse response = connector.invoke("RemoveMember", params);
 
         if (!response.getSuccess()) {
             log.error("add court member error: {}, payload: {}", response.getMessage(), response.getPayload());
