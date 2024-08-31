@@ -276,6 +276,45 @@ func (s *SmartContract) GetUnfinalizedRequests(ctx contractapi.TransactionContex
 	return unfinalizedRequests, nil
 }
 
+func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, courtID string, request CourtRequest) error {
+	court, err := s.GetCourtByID(ctx, courtID)
+	if err != nil {
+		return err
+	}
+
+	clientID, err := s.getClientID(ctx)
+	if err != nil {
+		return err
+	}
+
+	if court.Owner != clientID && !contains(court.Members, clientID) {
+		return errors.New("only the owner or members can add requests")
+	}
+
+	court.Requests = append(court.Requests, request)
+
+	courtJSON, err := json.Marshal(court)
+	if err != nil {
+		return err
+	}
+
+	err = ctx.GetStub().PutState(courtID, courtJSON)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func contains(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
 // FinalizeRequest 함수 수정: owner 또는 members만 접근 가능
 func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterface, courtID string, requestID string, status string, errorMessage string) error {
 	// court 가져오기
