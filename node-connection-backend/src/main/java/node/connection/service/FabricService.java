@@ -148,12 +148,26 @@ public class FabricService {
         String id = getId(VIEWER_MSP, phoneNumber);
         String response = this.viewerCAConnector.register(id, secret, HFCAClient.HFCA_TYPE_USER, this.viewerRegistrar);
 
+        Enrollment enrollment;
+
         if (response == null) {
-            throw new BadRequestException(ExceptionStatus.ALREADY_CA_REGISTERED);
+            log.info("id {} already registered. try re-enroll.", id);
+
+            UserAccount userAccount = this.userAccountRepository.findByName(id)
+                    .orElseThrow(() -> new NotFoundException(ExceptionStatus.USER_NOT_FOUND));
+
+            Registrar newRegistrar = Registrar.builder()
+                    .name(id)
+                    .enrollment(CAEnrollment.deserialize(this.objectMapper, userAccount.getEnrollment()))
+                    .build();
+
+            enrollment = this.viewerCAConnector.reenroll(newRegistrar);
+        }
+        else {
+            enrollment = this.viewerCAConnector.enroll(id, secret);
         }
 
-        Enrollment e = this.viewerCAConnector.enroll(id, secret);
-        this.saveRegister(VIEWER_MSP, id, phoneNumber, secret, e);
+        this.saveRegister(VIEWER_MSP, id, phoneNumber, secret, enrollment);
     }
 
     public void registerToRegistryMSP(String number, String secret) {
@@ -225,7 +239,11 @@ public class FabricService {
                 .orElseThrow(() -> new ServerException(ExceptionStatus.NO_FABRIC_CA_DATA));
 
         CAEnrollment enrollment = CAEnrollment.deserialize(this.objectMapper, register.getEnrollment());
-        return new FabricConnector(Client.of(register, enrollment));
+        Client client = Client.of(register, enrollment);
+        FabricConnector connector = new FabricConnector(client);
+        connector.connectToChannel(this.networkConfig);
+
+        return connector;
     }
 
     public void setChaincode(String name, String version) {
@@ -260,30 +278,5 @@ public class FabricService {
 
     public static String getId(String msp, String number) {
         return msp + ID_DELIMITER + number;
-    }
-
-    public void delete(CustomUserDetails userDetails) {
-        UserAccount userAccount = userDetails.getUserAccount();
-        String id = userAccount.getName();
-        String mspId = userAccount.getMspId();
-
-        if (mspId.equals(VIEWER_MSP)) {
-            try {
-                this.viewerCAConnector.getClient().revoke(this.viewerRegistrar, id, "DELETE_REQUEST");
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new ServerException(ExceptionStatus.FABRIC_CA_REVOKE_ERROR);
-            }
-        } else if (mspId.equals(REGISTRY_MSP)) {
-            try {
-                this.registryCAConnector.getClient().revoke(this.registrar, id, "DELETE_REQUEST");
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new ServerException(ExceptionStatus.FABRIC_CA_REVOKE_ERROR);
-            }
-        }
-
-        this.userAccountRepository.delete(userAccount);
-        log.info("user {} deleted", id);
     }
 }
