@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import node.connection.dto.court.request.CourtCreateRequest;
 import node.connection.entity.pk.CourtKey;
 
 import java.time.LocalDateTime;
@@ -54,6 +55,21 @@ public class Court {
                 .phoneNumber(phoneNumber)
                 .address(address)
                 .faxNumber(faxNumber)
+                .build();
+    }
+
+    public static Court of(CourtCreateRequest request) {
+        CourtKey courtKey = CourtKey.builder()
+                .court(request.court())
+                .support(request.support())
+                .office(request.office())
+                .build();
+
+        return Court.builder()
+                .key(courtKey)
+                .phoneNumber(request.phoneNumber())
+                .address(request.address())
+                .faxNumber(request.faxNumber())
                 .build();
     }
 }
