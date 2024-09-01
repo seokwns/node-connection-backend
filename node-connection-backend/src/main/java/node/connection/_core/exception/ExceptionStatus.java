@@ -43,8 +43,8 @@ public enum ExceptionStatus {
     FABRIC_CHAINCODE_INSTANTIATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3008", "체인코드 인스턴스화 과정에서 에러가 발생했습니다."),
     PROPOSAL_RESPONSE_INTERCEPTOR_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3009", "Proposal response 처리 과정에서 에러가 발생했습니다."),
     FABRIC_CHAINCODE_UPGRADE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3010", "체인코드 업그레이드 과정에서 에러가 발생했습니다."),
-    FABRIC_QUERY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3011", "쿼리 중 에러가 발생했습니다."),
-    FABRIC_INVOKE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3012", "함수 호출 중 에러가 발생했습니다.")
+    FABRIC_QUERY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3011", "패브릭 쿼리 중 에러가 발생했습니다."),
+    FABRIC_INVOKE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3012", "패브릭 함수 호출 중 에러가 발생했습니다.")
     ;
 
     private final HttpStatus status;
