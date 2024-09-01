@@ -33,7 +33,7 @@ type CourtRequest struct {
 	ID            string          `json:"id"`
 	DocumentID    string          `json:"documentId"`
 	Action        string          `json:"action"`
-	Payload       json.RawMessage `json:"payload"`
+	Payload       string          `json:"payload"`
 	Finalized     bool            `json:"finalized"`
 	RequestDate   string          `json:"requestDate"`
 	FinalizeDate  string          `json:"finalizeDate,omitempty"`
@@ -315,7 +315,6 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-// FinalizeRequest 함수 수정: owner 또는 members만 접근 가능
 func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterface, courtID string, requestID string, status string, errorMessage string) error {
 	// court 가져오기
 	court, err := s.GetCourtByID(ctx, courtID)
@@ -365,9 +364,17 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 
 	if status == "success" {
 		chaincodeName := "registry"
+		
+		var payloadData map[string]interface{}
+		err = json.Unmarshal([]byte(request.Payload), &payloadData)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal payload JSON: %v", err)
+		}
+
 		actionArgs := [][]byte{[]byte(request.Action), []byte(request.DocumentID)}
+		
 		if len(request.Payload) > 0 {
-			actionArgs = append(actionArgs, request.Payload)
+			actionArgs = append(actionArgs, []byte(request.Payload))  // request.Payload는 string 타입
 		}
 
 		response := ctx.GetStub().InvokeChaincode(chaincodeName, actionArgs, "")
@@ -391,23 +398,23 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 			return fmt.Errorf("failed to marshal event payload: %v", err)
 		}
 	}
-	
+
 	request.Finalized = true
 	request.FinalizeDate = time.Now().Format(time.RFC3339)
 	court.FinalizedRequests = append(court.FinalizedRequests, *request)
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
-		return fmt.Errorf("failed to marshal court JSON: %v", err)
+			return fmt.Errorf("failed to marshal court JSON: %v", err)
 	}
 
 	err = ctx.GetStub().PutState(court.ID, courtJSON)
 	if err != nil {
-		return fmt.Errorf("failed to put court: %v", err)
+			return fmt.Errorf("failed to put court: %v", err)
 	}
 
 	err = ctx.GetStub().SetEvent(eventName, eventPayload)
 	if err != nil {
-		return fmt.Errorf("failed to set event: %v", err)
+			return fmt.Errorf("failed to set event: %v", err)
 	}
 
 	return nil
