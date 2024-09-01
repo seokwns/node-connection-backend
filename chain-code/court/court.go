@@ -407,7 +407,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 		actionArgs := [][]byte{[]byte(request.Action), []byte(request.DocumentID)}
 		
 		if len(request.Payload) > 0 {
-			actionArgs = append(actionArgs, []byte(request.Payload))  // request.Payload는 string 타입
+			actionArgs = append(actionArgs, payloadBytes)
 		}
 
 		response := ctx.GetStub().InvokeChaincode(chaincodeName, actionArgs, "")
