@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.server.ServerException;
+import node.connection._core.utils.Mapper;
 import node.connection.data.registry.RegistryBuilder;
 import node.connection.data.registry.RegistryDocument;
 import node.connection.data.wallet.metadata.DidMetadata;
@@ -35,7 +36,7 @@ public class RegistryService {
 
     private final FabricService fabricService;
 
-    private final ObjectMapper objectMapper;
+    private final Mapper objectMapper;
 
     private final RegistryBuilder registryBuilder;
 
@@ -44,7 +45,7 @@ public class RegistryService {
     public RegistryService(
             @Autowired WalletService walletService,
             @Autowired FabricService fabricService,
-            @Autowired ObjectMapper objectMapper,
+            @Autowired Mapper objectMapper,
             @Autowired RegistryBuilder registryBuilder,
             @Autowired DidEntryRepository didEntryRepository
     ) {
@@ -93,8 +94,6 @@ public class RegistryService {
             DidEntry didEntry = DidEntry.builder().key(didEntryKey).verKey(verKey).build();
             didEntryRepository.save(didEntry);
             log.info("Registry document created successfully. | " + documentId);
-        } catch (JsonProcessingException e) {
-            throw new ServerException(ExceptionStatus.JSON_PROCESSING_EXCEPTION);
         } catch (IndyException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         } finally {

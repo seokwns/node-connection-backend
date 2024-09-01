@@ -1,13 +1,12 @@
 package node.connection.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.client.BadRequestException;
 import node.connection._core.exception.client.NotFoundException;
 import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
+import node.connection._core.utils.Mapper;
 import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.dto.wallet.UserWalletCreateRequest;
 import node.connection.entity.UserAccount;
@@ -44,7 +43,7 @@ public class FabricService {
 
     private Client rootClient;
 
-    private final ObjectMapper objectMapper;
+    private final Mapper objectMapper;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -61,7 +60,7 @@ public class FabricService {
 
     public FabricService(
             @Autowired FabricConfig fabricConfig,
-            @Autowired ObjectMapper objectMapper,
+            @Autowired Mapper objectMapper,
             @Autowired PasswordEncoder passwordEncoder,
             @Autowired UserAccountRepository userAccountRepository,
             @Autowired WalletService walletService
@@ -269,11 +268,8 @@ public class FabricService {
         log.debug(String.valueOf(response));
 
         String payload = response.getPayload();
-        try {
-            return this.objectMapper.readValue(payload, RegistryDocumentDto.class);
-        } catch (JsonProcessingException e) {
-            throw new ServerException(ExceptionStatus.JSON_PROCESSING_EXCEPTION);
-        }
+        log.info("registry payload: {}", payload);
+        return this.objectMapper.readValue(payload, RegistryDocumentDto.class);
     }
 
     public static String getId(String msp, String number) {

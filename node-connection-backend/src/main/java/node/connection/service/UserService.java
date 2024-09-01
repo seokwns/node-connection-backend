@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.server.ServerException;
+import node.connection._core.utils.Mapper;
 import node.connection.data.wallet.metadata.DidMetadata;
 import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.dto.registry.request.FindUserRegistryDocumentsRequest;
@@ -31,13 +32,13 @@ public class UserService {
 
     private final DidEntryRepository didEntryRepository;
 
-    private final ObjectMapper objectMapper;
+    private final Mapper objectMapper;
 
     public UserService(
             @Autowired FabricService fabricService,
             @Autowired WalletService walletService,
             @Autowired DidEntryRepository didEntryRepository,
-            @Autowired ObjectMapper objectMapper
+            @Autowired Mapper objectMapper
     ) {
         this.fabricService = fabricService;
         this.walletService = walletService;
@@ -69,9 +70,6 @@ public class UserService {
         } catch (IndyException | ExecutionException | InterruptedException e) {
             e.printStackTrace();
             throw new ServerException(ExceptionStatus.WALLET_CLOSE_ERROR);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new ServerException(ExceptionStatus.JSON_PROCESSING_EXCEPTION);
         }
     }
 }
