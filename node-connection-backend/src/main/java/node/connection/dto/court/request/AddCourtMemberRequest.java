@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
-public class AddCourtMemberRequest extends CourtRequest {
+public class AddCourtMemberRequest extends BaseCourtRequest {
     private final String memberId;
 
     @JsonCreator
@@ -13,7 +13,8 @@ public class AddCourtMemberRequest extends CourtRequest {
             @JsonProperty("court") String court,
             @JsonProperty("support") String support,
             @JsonProperty("office") String office,
-            @JsonProperty("memberId") String memberId) {
+            @JsonProperty("memberId") String memberId
+    ) {
         super(court, support, office);
         this.memberId = memberId;
     }
