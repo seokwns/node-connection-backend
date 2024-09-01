@@ -1,6 +1,7 @@
 package node.connection.dto.court.response;
 
 import java.util.List;
+import java.util.Map;
 
 public record FabricCourt(
         String id,
@@ -10,6 +11,8 @@ public record FabricCourt(
         String owner,
         List<String> members,
         List<FabricCourtRequest> requests,
-        List<FabricCourtRequest> finalized
+        Map<String, FabricCourtRequest> requestsByID,
+        Map<String, FabricCourtRequest> finalizedRequestsByID,
+        Map<String, FabricCourtRequest> unfinalizedRequestsByID
 ) {
 }
