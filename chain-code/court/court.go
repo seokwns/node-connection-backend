@@ -1,34 +1,37 @@
-/*
-SPDX-License-Identifier: Apache-2.0
-*/
-
 package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"time"
-	"errors"
 )
 
 type SmartContract struct {
 	contractapi.Contract
+	GlobalIndex CourtRequestGlobalIndex
 }
 
-// Court 구조체
+type CourtRequestGlobalIndex struct {
+	CourtByRequestID           map[string]string        // 요청 ID -> 법원 ID
+	RequestsByRequester        map[string][]string      // 요청자 ID -> 요청 ID 리스트
+	RequestsByDocumentID       map[string][]string      // Document ID -> 요청 ID 리스트
+}
+
 type Court struct {
-	ID      					string   				 `json:"id"`
-	Court         		string           `json:"court"`
-	Support       		string           `json:"support"`
-	Office        		string           `json:"office"`
-	Owner             string           `json:"owner"`
-	Members           []string         `json:"members"`
-	Requests          []CourtRequest   `json:"requests"`
-	FinalizedRequests []CourtRequest   `json:"finalized"`
+	ID                   		string               			`json:"id"`
+	Court                		string               			`json:"court"`
+	Support              		string               			`json:"support"`
+	Office               		string               			`json:"office"`
+	Owner                		string               			`json:"owner"`
+	Members              		[]string             			`json:"members"`
+	Requests                []*CourtRequest           `json:"requests"`
+	RequestsByID            map[string]*CourtRequest 	`json:"requestsByID"`
+	FinalizedRequestsByID   map[string]*CourtRequest 	`json:"finalizedRequestsByID"`
+	UnfinalizedRequestsByID map[string]*CourtRequest 	`json:"unfinalizedRequestsByID"`
 }
 
-// CourtRequest 구조체
 type CourtRequest struct {
 	ID            string          `json:"id"`
 	DocumentID    string          `json:"documentId"`
@@ -36,13 +39,16 @@ type CourtRequest struct {
 	Payload       string          `json:"payload"`
 	Finalized     bool            `json:"finalized"`
 	RequestDate   string          `json:"requestDate"`
+	RequestedBy   string          `json:"requestedBy,omitempty"`
 	FinalizeDate  string          `json:"finalizeDate,omitempty"`
+	FinalizedBy   string          `json:"finalizedBy,omitempty"`
 	Status        string          `json:"status"`
 	ErrorMessage  string          `json:"errorMessage,omitempty"`
 	ForwardedTo   string          `json:"forwardedTo,omitempty"`
+	ForwardedFrom string 				  `json:"forwardedFrom,omitempty"`
 }
 
-func (s *SmartContract) RegistryCourt(ctx contractapi.TransactionContextInterface, id, court, support, office, owner string) (*Court, error) {
+func (s *SmartContract) CreateCourt(ctx contractapi.TransactionContextInterface, id, court, support, office, owner string) (*Court, error) {
 	courts, err := s.GetAllCourts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get courts: %v", err)
@@ -55,14 +61,16 @@ func (s *SmartContract) RegistryCourt(ctx contractapi.TransactionContextInterfac
 	}
 
 	newCourt := &Court{
-		ID:       id,
-		Court:    court,
-		Support:  support,
-		Office:   office,
-		Owner:    owner,
-		Members:  []string{},
-		Requests: []CourtRequest{},
-		FinalizedRequests: []CourtRequest{},
+		ID:                     id,
+		Court:                  court,
+		Support:                support,
+		Office:                 office,
+		Owner:                  owner,
+		Members:                []string{},
+		Requests:               []*CourtRequest{},
+		RequestsByID:           make(map[string]*CourtRequest),
+		FinalizedRequestsByID:  make(map[string]*CourtRequest),
+		UnfinalizedRequestsByID: make(map[string]*CourtRequest),
 	}
 
 	courtJSON, err := json.Marshal(newCourt)
@@ -73,6 +81,16 @@ func (s *SmartContract) RegistryCourt(ctx contractapi.TransactionContextInterfac
 	err = ctx.GetStub().PutState(id, courtJSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to put state: %v", err)
+	}
+
+	if s.GlobalIndex.CourtByRequestID == nil {
+		s.GlobalIndex.CourtByRequestID = make(map[string]string)
+	}
+	if s.GlobalIndex.RequestsByRequester == nil {
+		s.GlobalIndex.RequestsByRequester = make(map[string][]string)
+	}
+	if s.GlobalIndex.RequestsByDocumentID == nil {
+		s.GlobalIndex.RequestsByDocumentID = make(map[string][]string)
 	}
 
 	return newCourt, nil
@@ -122,60 +140,12 @@ func (s *SmartContract) GetAllCourts(ctx contractapi.TransactionContextInterface
 	return courts, nil
 }
 
-// 새로운 함수: 소유자 변경
-func (s *SmartContract) ChangeOwner(ctx contractapi.TransactionContextInterface, courtID string, newOwner string) error {
-	// court 가져오기
+func (s *SmartContract) AddMember(ctx contractapi.TransactionContextInterface, courtID string, memberID string) error {
 	court, err := s.GetCourtByID(ctx, courtID)
 	if err != nil {
 		return err
 	}
 
-	// 현재 호출자가 소유자인지 확인
-	clientID, err := s.getClientID(ctx)
-	if err != nil {
-		return err
-	}
-
-	if court.Owner != clientID {
-		return errors.New("only the current owner can change the owner")
-	}
-
-	// 새 소유자가 RegistryMSP에 속하는지 확인
-	mspID, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return err
-	}
-
-	if mspID != "RegistryMSP" {
-		return errors.New("the new owner must belong to RegistryMSP")
-	}
-
-	// 소유자 변경
-	court.Owner = newOwner
-
-	// 상태 업데이트
-	courtJSON, err := json.Marshal(court)
-	if err != nil {
-		return err
-	}
-
-	err = ctx.GetStub().PutState(courtID, courtJSON)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// 새로운 함수: 회원 추가
-func (s *SmartContract) AddMember(ctx contractapi.TransactionContextInterface, courtID string, member string) error {
-	// court 가져오기
-	court, err := s.GetCourtByID(ctx, courtID)
-	if err != nil {
-		return err
-	}
-
-	// 현재 호출자가 소유자인지 확인
 	clientID, err := s.getClientID(ctx)
 	if err != nil {
 		return err
@@ -185,42 +155,63 @@ func (s *SmartContract) AddMember(ctx contractapi.TransactionContextInterface, c
 		return errors.New("only the owner can add members")
 	}
 
-	// 추가할 멤버가 RegistryMSP에 속해 있는지 확인
-	mspID, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return err
+	for _, member := range court.Members {
+		if member == memberID {
+			return errors.New("member already exists in the court")
+		}
 	}
 
-	if mspID != "RegistryMSP" {
-		return errors.New("the member must belong to RegistryMSP")
-	}
+	court.Members = append(court.Members, memberID)
 
-	// 멤버 추가
-	court.Members = append(court.Members, member)
-
-	// 상태 업데이트
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal court JSON: %v", err)
 	}
 
 	err = ctx.GetStub().PutState(courtID, courtJSON)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to put court: %v", err)
 	}
 
 	return nil
 }
 
-// 새로운 함수: 회원 삭제
-func (s *SmartContract) RemoveMember(ctx contractapi.TransactionContextInterface, courtID string, member string) error {
-	// court 가져오기
+func (s *SmartContract) UpdateOwner(ctx contractapi.TransactionContextInterface, courtID string, newOwnerID string) error {
 	court, err := s.GetCourtByID(ctx, courtID)
 	if err != nil {
 		return err
 	}
 
-	// 현재 호출자가 소유자인지 확인
+	clientID, err := s.getClientID(ctx)
+	if err != nil {
+		return err
+	}
+
+	if court.Owner != clientID {
+		return errors.New("only the current owner can update the owner")
+	}
+
+	court.Owner = newOwnerID
+
+	courtJSON, err := json.Marshal(court)
+	if err != nil {
+		return fmt.Errorf("failed to marshal court JSON: %v", err)
+	}
+
+	err = ctx.GetStub().PutState(courtID, courtJSON)
+	if err != nil {
+		return fmt.Errorf("failed to put court: %v", err)
+	}
+
+	return nil
+}
+
+func (s *SmartContract) RemoveMember(ctx contractapi.TransactionContextInterface, courtID string, memberID string) error {
+	court, err := s.GetCourtByID(ctx, courtID)
+	if err != nil {
+		return err
+	}
+
 	clientID, err := s.getClientID(ctx)
 	if err != nil {
 		return err
@@ -230,50 +221,37 @@ func (s *SmartContract) RemoveMember(ctx contractapi.TransactionContextInterface
 		return errors.New("only the owner can remove members")
 	}
 
-	// 멤버가 court의 members에 존재하는지 확인
-	memberFound := false
-	for i, m := range court.Members {
-		if m == member {
-			// 멤버 삭제
-			court.Members = append(court.Members[:i], court.Members[i+1:]...)
-			memberFound = true
+	memberExists := false
+	for _, member := range court.Members {
+		if member == memberID {
+			memberExists = true
 			break
 		}
 	}
 
-	if !memberFound {
-		return fmt.Errorf("member %s not found in court %s", member, courtID)
+	if !memberExists {
+		return errors.New("member does not exist in the court")
 	}
 
-	// 상태 업데이트
+	newMembers := []string{}
+	for _, member := range court.Members {
+		if member != memberID {
+			newMembers = append(newMembers, member)
+		}
+	}
+	court.Members = newMembers
+
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal court JSON: %v", err)
 	}
 
 	err = ctx.GetStub().PutState(courtID, courtJSON)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to put court: %v", err)
 	}
 
 	return nil
-}
-
-// 새로운 함수: unfinalized된 요청 가져오기
-func (s *SmartContract) GetUnfinalizedRequests(ctx contractapi.TransactionContextInterface, courtID string) ([]CourtRequest, error) {
-	court, err := s.GetCourtByID(ctx, courtID)
-	if err != nil {
-		return nil, err
-	}
-
-	var unfinalizedRequests []CourtRequest
-	for _, request := range court.Requests {
-		if !request.Finalized {
-			unfinalizedRequests = append(unfinalizedRequests, request)
-		}
-	}
-
-	return unfinalizedRequests, nil
 }
 
 func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, courtID string, request CourtRequest) error {
@@ -306,20 +284,47 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 	if request.RequestDate == "" {
 		return errors.New("request RequestDate is required")
 	}
-	if request.Status == "" {
-		request.Status = "Pending"
+
+	request.Status = "Pending"
+	request.FinalizeDate = "-"
+	request.ErrorMessage = "-"
+	request.ForwardedTo = "-"
+	request.ForwardedFrom = "-"
+
+	request.RequestedBy = clientID
+	request.Finalized = false
+	request.FinalizedBy = "-"
+
+	// Initialize GlobalIndex maps if needed
+	if s.GlobalIndex.CourtByRequestID == nil {
+		s.GlobalIndex.CourtByRequestID = make(map[string]string)
 	}
-	if request.FinalizeDate == "" {
-		request.FinalizeDate = "-"
+	if s.GlobalIndex.RequestsByRequester == nil {
+		s.GlobalIndex.RequestsByRequester = make(map[string][]string)
 	}
-	if request.ErrorMessage == "" {
-		request.ErrorMessage = "-"
-	}
-	if request.ForwardedTo == "" {
-		request.ForwardedTo = "-"
+	if s.GlobalIndex.RequestsByDocumentID == nil {
+		s.GlobalIndex.RequestsByDocumentID = make(map[string][]string)
 	}
 
-	court.Requests = append(court.Requests, request)
+	s.GlobalIndex.CourtByRequestID[request.ID] = courtID
+
+	if _, exists := s.GlobalIndex.RequestsByRequester[request.RequestedBy]; !exists {
+		s.GlobalIndex.RequestsByRequester[request.RequestedBy] = []string{}
+	}
+	s.GlobalIndex.RequestsByRequester[request.RequestedBy] = append(s.GlobalIndex.RequestsByRequester[request.RequestedBy], request.ID)
+	
+	if _, exists := s.GlobalIndex.RequestsByDocumentID[request.DocumentID]; !exists {
+		s.GlobalIndex.RequestsByDocumentID[request.DocumentID] = []string{}
+	}
+	s.GlobalIndex.RequestsByDocumentID[request.DocumentID] = append(s.GlobalIndex.RequestsByDocumentID[request.DocumentID], request.ID)
+
+	if _, exists := court.UnfinalizedRequestsByID[request.ID]; exists {
+		return errors.New("a request with the same ID already exists")
+	}
+	court.UnfinalizedRequestsByID[request.ID] = &request
+
+	court.RequestsByID[request.ID] = &request
+	court.Requests = append(court.Requests, &request)
 
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
@@ -334,52 +339,23 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 	return nil
 }
 
-func contains(slice []string, item string) bool {
-	for _, v := range slice {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterface, courtID string, requestID string, status string, errorMessage string) error {
-	// court 가져오기
 	court, err := s.GetCourtByID(ctx, courtID)
 	if err != nil {
 		return err
 	}
 
-	// 현재 호출자가 소유자 또는 멤버인지 확인
 	clientID, err := s.getClientID(ctx)
 	if err != nil {
 		return err
 	}
 
-	isAuthorized := court.Owner == clientID
-	if !isAuthorized {
-		for _, member := range court.Members {
-			if member == clientID {
-				isAuthorized = true
-				break
-			}
-		}
+	if court.Owner != clientID && !contains(court.Members, clientID) {
+		return errors.New("only the owner or members can finalize requests")
 	}
 
-	if !isAuthorized {
-		return errors.New("only the owner or members can finalize the request")
-	}
-
-	// 요청 찾기
-	var request *CourtRequest
-	for i := range court.Requests {
-		if court.Requests[i].ID == requestID {
-			request = &court.Requests[i]
-			break
-		}
-	}
-
-	if request == nil {
+	request, exists := court.UnfinalizedRequestsByID[requestID]
+	if !exists {
 		return fmt.Errorf("request with ID %s does not exist in court %s", requestID, courtID)
 	}
 
@@ -387,93 +363,75 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 		return errors.New("request is already finalized")
 	}
 
-	var eventName string
-	var eventPayload []byte
-
 	if status == "success" {
 		chaincodeName := "registry"
-		
-		// Payload 처리
-		var payloadData map[string]interface{}
-		if err := json.Unmarshal([]byte(request.Payload), &payloadData); err != nil {
-			return fmt.Errorf("failed to unmarshal payload JSON: %v", err)
-		}
-
-		payloadBytes, err := json.Marshal(payloadData)
-		if err != nil {
-			return fmt.Errorf("failed to marshal payload data: %v", err)
-		}
-
 		actionArgs := [][]byte{[]byte(request.Action), []byte(request.DocumentID)}
-		
+
 		if len(request.Payload) > 0 {
-			actionArgs = append(actionArgs, payloadBytes)
+			actionArgs = append(actionArgs, []byte(request.Payload))
 		}
 
 		response := ctx.GetStub().InvokeChaincode(chaincodeName, actionArgs, "")
 		if response.Status != 200 {
-			return fmt.Errorf("failed to invoke action %s: %v", request.Action, response.Message)
+			return fmt.Errorf("failed to invoke chaincode: %s", response.Message)
 		}
 
 		request.Status = "Success"
-		eventName = "RequestSucceeded"
-		eventPayload, err = json.Marshal(request)
-		if err != nil {
-			return fmt.Errorf("failed to marshal event payload: %v", err)
-		}
+		request.ErrorMessage = "-"
 	} else {
-		request.Status = "error"
+		request.Status = "Fail"
 		request.ErrorMessage = errorMessage
-
-		eventName = "RequestFailed"
-		eventPayload, err = json.Marshal(request)
-		if err != nil {
-			return fmt.Errorf("failed to marshal event payload: %v", err)
-		}
 	}
 
 	request.Finalized = true
 	request.FinalizeDate = time.Now().Format(time.RFC3339)
-	court.FinalizedRequests = append(court.FinalizedRequests, *request)
+	request.FinalizedBy = clientID
+
+	delete(court.UnfinalizedRequestsByID, requestID)
+	court.FinalizedRequestsByID[requestID] = request
+
+	s.GlobalIndex.CourtByRequestID[requestID] = courtID
+
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
-			return fmt.Errorf("failed to marshal court JSON: %v", err)
+		return fmt.Errorf("failed to marshal court JSON: %v", err)
 	}
-
-	err = ctx.GetStub().PutState(court.ID, courtJSON)
+	err = ctx.GetStub().PutState(courtID, courtJSON)
 	if err != nil {
-			return fmt.Errorf("failed to put court: %v", err)
+		return fmt.Errorf("failed to put court: %v", err)
 	}
 
+	eventName := "ReqeustFinalized"
+	eventPayload, err := json.Marshal(request)
+	if err != nil {
+		return fmt.Errorf("failed to marshal event payload: %v", err)
+	}
 	err = ctx.GetStub().SetEvent(eventName, eventPayload)
 	if err != nil {
-			return fmt.Errorf("failed to set event: %v", err)
+		return fmt.Errorf("failed to set event: %v", err)
 	}
 
 	return nil
 }
 
-func (s *SmartContract) getClientID(ctx contractapi.TransactionContextInterface) (string, error) {
-	certBase64, err := ctx.GetClientIdentity().GetX509Certificate()
-	if err != nil {
-		return "", fmt.Errorf("failed to get client certificate: %v", err)
-	}
-
-	return certBase64.Subject.CommonName, nil
-}
-
 func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterface, requestID string, targetCourtID string) error {
-	requestJSON, err := ctx.GetStub().GetState(requestID)
+	clientID, err := s.getClientID(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get request: %v", err)
-	}
-	if requestJSON == nil {
-		return errors.New("request does not exist")
+		return err
 	}
 
-	var request CourtRequest
-	if err := json.Unmarshal(requestJSON, &request); err != nil {
-		return fmt.Errorf("failed to unmarshal request JSON: %v", err)
+	currentCourt, err := s.GetCourtByID(ctx, s.GlobalIndex.CourtByRequestID[requestID])
+	if err != nil {
+		return fmt.Errorf("failed to get current court: %v", err)
+	}
+
+	if currentCourt.Owner != clientID && !contains(currentCourt.Members, clientID) {
+		return errors.New("only the owner or members can forward requests")
+	}
+
+	request, exists := currentCourt.RequestsByID[requestID]
+	if !exists {
+		return fmt.Errorf("request with ID %s does not exist in current court %s", requestID, currentCourt.ID)
 	}
 
 	if request.Finalized {
@@ -485,34 +443,109 @@ func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("failed to get target court: %v", err)
 	}
 
+	if _, exists := targetCourt.RequestsByID[requestID]; exists {
+		return fmt.Errorf("request with ID %s already exists in target court %s", requestID, targetCourtID)
+	}
+
 	request.Finalized = true
 	request.FinalizeDate = time.Now().Format(time.RFC3339)
 	request.Status = "Forwarded"
 	request.ForwardedTo = targetCourtID
+	request.FinalizedBy = clientID
 
-	requestJSON, err = json.Marshal(request)
-	if err != nil {
-		return fmt.Errorf("failed to marshal court request: %v", err)
+	delete(currentCourt.UnfinalizedRequestsByID, requestID)
+	currentCourt.FinalizedRequestsByID[requestID] = request
+
+	newRequest := *request
+	newRequest.Finalized = false
+	newRequest.FinalizeDate = "-"
+	newRequest.FinalizedBy = "-"
+	newRequest.Status = "Pending"
+	newRequest.ForwardedFrom = currentCourt.ID
+	targetCourt.RequestsByID[requestID] = &newRequest
+	targetCourt.UnfinalizedRequestsByID[requestID] = &newRequest
+	
+	if _, exists := s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID]; !exists {
+		s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID] = []string{}
 	}
+	s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID] = append(s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID], requestID)
 
-	err = ctx.GetStub().PutState(requestID, requestJSON)
+	s.GlobalIndex.CourtByRequestID[requestID] = targetCourtID
+
+	currentCourtJSON, err := json.Marshal(currentCourt)
 	if err != nil {
-		return fmt.Errorf("failed to update court request: %v", err)
+		return fmt.Errorf("failed to marshal current court JSON: %v", err)
 	}
-
-	targetCourt.Requests = append(targetCourt.Requests, request)
+	err = ctx.GetStub().PutState(currentCourt.ID, currentCourtJSON)
+	if err != nil {
+		return fmt.Errorf("failed to put state for current court: %v", err)
+	}
 
 	targetCourtJSON, err := json.Marshal(targetCourt)
 	if err != nil {
-		return fmt.Errorf("failed to marshal target court: %v", err)
+		return fmt.Errorf("failed to marshal target court JSON: %v", err)
 	}
-
 	err = ctx.GetStub().PutState(targetCourtID, targetCourtJSON)
 	if err != nil {
-		return fmt.Errorf("failed to update target court: %v", err)
+		return fmt.Errorf("failed to put state for target court: %v", err)
 	}
 
 	return nil
+}
+
+func (s *SmartContract) GetAllUnfinalizedRequests(ctx contractapi.TransactionContextInterface, courtID string) ([]CourtRequest, error) {
+	court, err := s.GetCourtByID(ctx, courtID)
+	if err != nil {
+		return nil, err
+	}
+
+	var unfinalizedRequests []CourtRequest
+	for _, request := range court.UnfinalizedRequestsByID {
+		unfinalizedRequests = append(unfinalizedRequests, *request)
+	}
+
+	return unfinalizedRequests, nil
+}
+
+func (s *SmartContract) GetAllFinalizedRequests(ctx contractapi.TransactionContextInterface, courtID string) ([]CourtRequest, error) {
+	court, err := s.GetCourtByID(ctx, courtID)
+	if err != nil {
+		return nil, err
+	}
+
+	var finalizedRequests []CourtRequest
+	for _, request := range court.FinalizedRequestsByID {
+		finalizedRequests = append(finalizedRequests, *request)
+	}
+
+	return finalizedRequests, nil
+}
+
+func (s *SmartContract) getRequestsByRequestorId(ctx contractapi.TransactionContextInterface, requestorID string) ([]string, error) {
+	requestIDs, exists := s.GlobalIndex.RequestsByRequester[requestorID]
+	if !exists {
+			return nil, fmt.Errorf("no requests found for requester ID %s", requestorID)
+	}
+
+	return requestIDs, nil
+}
+
+func contains(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *SmartContract) getClientID(ctx contractapi.TransactionContextInterface) (string, error) {
+	certBase64, err := ctx.GetClientIdentity().GetX509Certificate()
+	if err != nil {
+		return "", fmt.Errorf("failed to get client certificate: %v", err)
+	}
+
+	return certBase64.Subject.CommonName, nil
 }
 
 func main() {
