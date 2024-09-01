@@ -291,6 +291,34 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 		return errors.New("only the owner or members can add requests")
 	}
 
+	if request.ID == "" {
+		return errors.New("request ID is required")
+	}
+	if request.DocumentID == "" {
+		return errors.New("request DocumentID is required")
+	}
+	if request.Action == "" {
+		return errors.New("request Action is required")
+	}
+	if request.Payload == "" {
+		return errors.New("request Payload is required")
+	}
+	if request.RequestDate == "" {
+		return errors.New("request RequestDate is required")
+	}
+	if request.Status == "" {
+		request.Status = "Pending"
+	}
+	if request.FinalizeDate == "" {
+		request.FinalizeDate = "-"
+	}
+	if request.ErrorMessage == "" {
+		request.ErrorMessage = "-"
+	}
+	if request.ForwardedTo == "" {
+		request.ForwardedTo = "-"
+	}
+
 	court.Requests = append(court.Requests, request)
 
 	courtJSON, err := json.Marshal(court)
@@ -365,10 +393,15 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 	if status == "success" {
 		chaincodeName := "registry"
 		
+		// Payload 처리
 		var payloadData map[string]interface{}
-		err = json.Unmarshal([]byte(request.Payload), &payloadData)
-		if err != nil {
+		if err := json.Unmarshal([]byte(request.Payload), &payloadData); err != nil {
 			return fmt.Errorf("failed to unmarshal payload JSON: %v", err)
+		}
+
+		payloadBytes, err := json.Marshal(payloadData)
+		if err != nil {
+			return fmt.Errorf("failed to marshal payload data: %v", err)
 		}
 
 		actionArgs := [][]byte{[]byte(request.Action), []byte(request.DocumentID)}
