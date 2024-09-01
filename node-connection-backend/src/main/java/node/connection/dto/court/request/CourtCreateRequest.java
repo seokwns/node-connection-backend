@@ -7,7 +7,7 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class CourtCreateRequest extends CourtRequest {
+public class CourtCreateRequest extends BaseCourtRequest {
     private final String phoneNumber;
     private final String address;
     private final String faxNumber;
@@ -23,7 +23,8 @@ public class CourtCreateRequest extends CourtRequest {
             @JsonProperty("address") String address,
             @JsonProperty("faxNumber") String faxNumber,
             @JsonProperty("jurisdictions") List<String> jurisdictions,
-            @JsonProperty("walletPassword") String walletPassword) {
+            @JsonProperty("walletPassword") String walletPassword
+    ) {
         super(court, support, office);
         this.phoneNumber = phoneNumber;
         this.address = address;
