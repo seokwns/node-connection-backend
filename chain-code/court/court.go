@@ -521,13 +521,37 @@ func (s *SmartContract) GetAllFinalizedRequests(ctx contractapi.TransactionConte
 	return finalizedRequests, nil
 }
 
-func (s *SmartContract) getRequestsByRequestorId(ctx contractapi.TransactionContextInterface, requestorID string) ([]string, error) {
+func (s *SmartContract) GetRequestsByRequestorId(ctx contractapi.TransactionContextInterface, requestorID string) ([]CourtRequest, error) {
 	requestIDs, exists := s.GlobalIndex.RequestsByRequester[requestorID]
 	if !exists {
-			return nil, fmt.Errorf("no requests found for requester ID %s", requestorID)
+		return nil, fmt.Errorf("no requests found for requester ID %s", requestorID)
 	}
 
-	return requestIDs, nil
+	var requests []CourtRequest
+	for _, requestID := range requestIDs {
+		courtID, exists := s.GlobalIndex.CourtByRequestID[requestID]
+		if !exists {
+			continue
+		}
+
+		court, err := s.GetCourtByID(ctx, courtID)
+		if err != nil {
+			return nil, err
+		}
+
+		request, exists := court.RequestsByID[requestID]
+		if !exists {
+			continue
+		}
+
+		requests = append(requests, *request)
+	}
+
+	if len(requests) == 0 {
+		return nil, fmt.Errorf("no requests found for requester ID %s", requestorID)
+	}
+
+	return requests, nil
 }
 
 func contains(slice []string, item string) bool {
