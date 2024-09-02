@@ -39,6 +39,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+        log.info("new request submitted: {}", request.getRequestURI());
         String authContent = request.getHeader("Authorization");
 
         if(authContent == null) {
@@ -48,29 +49,42 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
         String accessToken = authContent.substring(7);
 
-        String decodedJWT = jweDecoder.decode(accessToken);
+        String decodedJWT = this.jweDecoder.decode(accessToken);
         JSONObject jsonObject = new JSONObject(decodedJWT);
 
         String sub = jsonObject.getString("sub");
         String mspId = sub.split(":")[0];
         String number = sub.split(":")[1];
         String secret = sub.split(":")[2];
-        String name = mspId + FabricService.ID_DELIMITER + number;
+        String name = FabricService.getId(mspId, number);
 
-        Role role = Role.ANONYMOUS;
-        if (!request.getRequestURI().contains("/user/register")) {
-            UserAccount userAccount = userAccountRepository.findByName(name)
+        if (request.getRequestURI().contains("/user/register")) {
+            Role role = Role.ANONYMOUS;
+            setAuthentication(mspId, number, secret, role);
+        }
+        else {
+            UserAccount userAccount = this.userAccountRepository.findByName(name)
                     .orElseThrow(() -> new NotFoundException(ExceptionStatus.USER_NOT_FOUND));
 
-            role = userAccount.getRole();
+            setAuthentication(userAccount);
         }
 
-        setAuthentication(mspId, number, secret, role);
         chain.doFilter(request, response);
     }
 
+    private void setAuthentication(UserAccount userAccount) {
+        CustomUserDetails userDetails = new CustomUserDetails(userAccount);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                userDetails.getPassword(),
+                userDetails.getAuthorities()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
     private void setAuthentication(String mspId, String number, String secret, Role role) {
-        String id = mspId + ".api." + number;
+        String id = FabricService.getId(mspId, number);
         UserAccount userAccount = UserAccount.builder().name(id).mspId(mspId).secret(secret).role(role).build();
         CustomUserDetails userDetails = new CustomUserDetails(userAccount);
         Authentication authentication = new UsernamePasswordAuthenticationToken(

@@ -4,8 +4,6 @@ import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
 import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.dto.registry.request.FindUserRegistryDocumentsRequest;
-import node.connection.dto.user.request.UserRegisterRequest;
-import node.connection.dto.wallet.UserWalletCreateRequest;
 import node.connection.service.FabricService;
 import node.connection.service.UserService;
 import node.connection.service.WalletService;
