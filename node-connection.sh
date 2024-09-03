@@ -216,7 +216,7 @@ function export_config() {
     echo "CA_VIEWER_PEM=$current_dir/network/node-connection-network/organizations/fabric-ca/viewer/ca-cert.pem" >> hyperledger.config.sh
     echo 'CA_ADMIN_NAME=admin' >> hyperledger.config.sh
     echo 'CA_ADMIN_PASSWORD=adminpw' >> hyperledger.config.sh
-    echo 'export CA_NAME CA_URL CA_ADMIN_NAME CA_ADMIN_PASSWORD CA_PEM' >> hyperledger.config.sh
+    echo 'export CA_REGISTRY_NAME CA_REGISTRY_URL CA_REGISTRY_PEM CA_VIEWER_NAME CA_VIEWER_PEM CA_VIEWER_URL CA_ADMIN_NAME CA_ADMIN_PASSWORD' >> hyperledger.config.sh
 
     # Fabric User Information
     echo '' >> hyperledger.config.sh
