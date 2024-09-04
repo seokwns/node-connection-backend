@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/court")
+@RequestMapping("/api/court")
 public class CourtController {
 
     private final CourtService courtService;
@@ -66,14 +66,16 @@ public class CourtController {
         return ResponseEntity.ok().body(Response.success(requests));
     }
 
-    @PostMapping("/{id}/request/finalize")
-    public ResponseEntity<?> finalizeCourtRequest(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable("id") String courtId,
-            @RequestBody FinalizeCourtRequest request
-    ) {
-        this.courtService.finalizeCourtRequest(userDetails, courtId, request);
-        return ResponseEntity.ok().body(Response.success(null));
+    @GetMapping("/{id}/request/finalized")
+    public ResponseEntity<?> getFinalizedRequests(@PathVariable("id") String id) {
+        List<FabricCourtRequest> requests = this.courtService.getFinalizedRequests(id);
+        return ResponseEntity.ok().body(Response.success(requests));
+    }
+
+    @GetMapping("/request")
+    public ResponseEntity<?> getCourtRequestsByRequestorId(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<FabricCourtRequest> requests = this.courtService.getCourtRequestsByRequestorId(userDetails);
+        return ResponseEntity.ok().body(Response.success(requests));
     }
 
     @PostMapping("/{id}/request/registry")
@@ -83,6 +85,16 @@ public class CourtController {
             @RequestBody RegistryCreateRequest request
     ) {
         this.courtService.createRegistryCourtRequest(userDetails, courtId, request);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PostMapping("/{id}/request/finalize")
+    public ResponseEntity<?> finalizeCourtRequest(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") String courtId,
+            @RequestBody FinalizeCourtRequest request
+    ) {
+        this.courtService.finalizeCourtRequest(userDetails, courtId, request);
         return ResponseEntity.ok().body(Response.success(null));
     }
 }

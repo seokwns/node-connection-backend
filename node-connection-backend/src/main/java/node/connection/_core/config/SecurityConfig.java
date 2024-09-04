@@ -111,9 +111,13 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests
-//                        .requestMatchers(
-//                                new AntPathRequestMatcher("/**")
-//                        ).permitAll()
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/swagger-ui/**"),
+                                new AntPathRequestMatcher("/swagger"),
+                                new AntPathRequestMatcher("/swagger-ui.html"),
+                                new AntPathRequestMatcher("/api-docs/**"),
+                                new AntPathRequestMatcher("/v3/api-docs/**")
+                        ).permitAll()
                         .anyRequest().authenticated()
         );
 

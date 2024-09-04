@@ -1,7 +1,6 @@
 package node.connection.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.server.ServerException;
@@ -169,6 +168,42 @@ public class CourtService {
 
         if (!response.getSuccess()) {
             log.error("get unfinalized court request error: {}, payload: {}", response.getMessage(), response.getPayload());
+            throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
+        }
+
+        if (response.getPayload().isEmpty()) {
+            return List.of();
+        }
+
+        return this.objectMapper.readValue(response.getPayload(), new TypeReference<List<FabricCourtRequest>>() {});
+    }
+
+    public List<FabricCourtRequest> getFinalizedRequests(String id) {
+        this.fabricService.setChaincode("court", COURT_CHAINCODE_VERSION);
+
+        List<String> params = List.of(id);
+        FabricProposalResponse response = this.fabricService.query("GetAllFinalizedRequests", params);
+
+        if (!response.getSuccess()) {
+            log.error("get finalized court request error: {}, payload: {}", response.getMessage(), response.getPayload());
+            throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
+        }
+
+        if (response.getPayload().isEmpty()) {
+            return List.of();
+        }
+
+        return this.objectMapper.readValue(response.getPayload(), new TypeReference<List<FabricCourtRequest>>() {});
+    }
+
+    public List<FabricCourtRequest> getCourtRequestsByRequestorId(CustomUserDetails userDetails) {
+        this.fabricService.setChaincode("court", COURT_CHAINCODE_VERSION);
+
+        List<String> params = List.of(userDetails.getUsername());
+        FabricProposalResponse response = this.fabricService.query("GetRequestsByRequestorId", params);
+
+        if (!response.getSuccess()) {
+            log.error("get court request error: {}, payload: {}", response.getMessage(), response.getPayload());
             throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
         }
 
