@@ -321,6 +321,11 @@ func (s *SmartContract) RemoveMember(ctx contractapi.TransactionContextInterface
 }
 
 func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, courtID string, request CourtRequest) error {
+	globalIndex, err := s.loadGlobalIndex(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load global index: %v", err)
+	}
+
 	court, err := s.GetCourtByID(ctx, courtID)
 	if err != nil {
 		return err
@@ -361,17 +366,20 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 	request.Finalized = false
 	request.FinalizedBy = "-"
 
-	s.GlobalIndex.CourtByRequestID[request.ID] = courtID
-
-	if _, exists := s.GlobalIndex.RequestsByRequester[request.RequestedBy]; !exists {
-		s.GlobalIndex.RequestsByRequester[request.RequestedBy] = []string{}
+	if _, exists := globalIndex.CourtByRequestID[request.ID]; exists {
+		return errors.New("a request with the same ID already exists")
 	}
-	s.GlobalIndex.RequestsByRequester[request.RequestedBy] = append(s.GlobalIndex.RequestsByRequester[request.RequestedBy], request.ID)
+	globalIndex.CourtByRequestID[request.ID] = courtID
 
-	if _, exists := s.GlobalIndex.RequestsByDocumentID[request.DocumentID]; !exists {
-		s.GlobalIndex.RequestsByDocumentID[request.DocumentID] = []string{}
+	if _, exists := globalIndex.RequestsByRequester[request.RequestedBy]; !exists {
+		globalIndex.RequestsByRequester[request.RequestedBy] = []string{}
 	}
-	s.GlobalIndex.RequestsByDocumentID[request.DocumentID] = append(s.GlobalIndex.RequestsByDocumentID[request.DocumentID], request.ID)
+	globalIndex.RequestsByRequester[request.RequestedBy] = append(globalIndex.RequestsByRequester[request.RequestedBy], request.ID)
+
+	if _, exists := globalIndex.RequestsByDocumentID[request.DocumentID]; !exists {
+		globalIndex.RequestsByDocumentID[request.DocumentID] = []string{}
+	}
+	globalIndex.RequestsByDocumentID[request.DocumentID] = append(globalIndex.RequestsByDocumentID[request.DocumentID], request.ID)
 
 	if _, exists := court.UnfinalizedRequestsByID[request.ID]; exists {
 		return errors.New("a request with the same ID already exists")
@@ -391,8 +399,7 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 		return err
 	}
 
-	err = s.saveGlobalIndex(ctx, s.GlobalIndex)
-	if err != nil {
+	if err := s.saveGlobalIndex(ctx, globalIndex); err != nil {
 		return fmt.Errorf("failed to save global index: %v", err)
 	}
 
@@ -457,13 +464,9 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 
 	globalIndex.CourtByRequestID[requestID] = courtID
 
-	globalIndexJSON, err := json.Marshal(globalIndex)
+	err = s.saveGlobalIndex(ctx, globalIndex)
 	if err != nil {
-		return fmt.Errorf("failed to marshal global index JSON: %v", err)
-	}
-	err = ctx.GetStub().PutState(GlobalIndexKey, globalIndexJSON)
-	if err != nil {
-		return fmt.Errorf("failed to update global index: %v", err)
+		return nil, fmt.Errorf("failed to save global index: %v", err)
 	}
 
 	courtJSON, err := json.Marshal(court)
