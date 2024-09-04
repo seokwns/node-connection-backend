@@ -466,7 +466,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 
 	err = s.saveGlobalIndex(ctx, globalIndex)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save global index: %v", err)
+		return fmt.Errorf("failed to save global index: %v", err)
 	}
 
 	courtJSON, err := json.Marshal(court)
