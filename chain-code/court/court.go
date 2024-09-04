@@ -105,6 +105,11 @@ func (s *SmartContract) loadGlobalIndex(ctx contractapi.TransactionContextInterf
 }
 
 func (s *SmartContract) CreateCourt(ctx contractapi.TransactionContextInterface, id, court, support, office, owner string) (*Court, error) {
+	globalIndex, err := s.loadGlobalIndex(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load global index: %v", err)
+	}
+
 	courts, err := s.GetAllCourts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get courts: %v", err)
@@ -139,14 +144,19 @@ func (s *SmartContract) CreateCourt(ctx contractapi.TransactionContextInterface,
 		return nil, fmt.Errorf("failed to put state: %v", err)
 	}
 
-	if s.GlobalIndex.CourtByRequestID == nil {
-		s.GlobalIndex.CourtByRequestID = make(map[string]string)
+	if globalIndex.CourtByRequestID == nil {
+		globalIndex.CourtByRequestID = make(map[string]string)
 	}
-	if s.GlobalIndex.RequestsByRequester == nil {
-		s.GlobalIndex.RequestsByRequester = make(map[string][]string)
+	if globalIndex.RequestsByRequester == nil {
+		globalIndex.RequestsByRequester = make(map[string][]string)
 	}
-	if s.GlobalIndex.RequestsByDocumentID == nil {
-		s.GlobalIndex.RequestsByDocumentID = make(map[string][]string)
+	if globalIndex.RequestsByDocumentID == nil {
+		globalIndex.RequestsByDocumentID = make(map[string][]string)
+	}
+
+	err = s.saveGlobalIndex(ctx, globalIndex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save global index: %v", err)
 	}
 
 	return newCourt, nil
