@@ -10,7 +10,7 @@ import (
 
 type SmartContract struct {
 	contractapi.Contract
-	GlobalIndex CourtRequestGlobalIndex
+	GlobalIndex *CourtRequestGlobalIndex
 }
 
 type CourtRequestGlobalIndex struct {
@@ -46,6 +46,62 @@ type CourtRequest struct {
 	ErrorMessage  string          `json:"errorMessage,omitempty"`
 	ForwardedTo   string          `json:"forwardedTo,omitempty"`
 	ForwardedFrom string 				  `json:"forwardedFrom,omitempty"`
+}
+
+const GlobalIndexKey = "GLOBAL_INDEX"
+
+func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
+	err := s.InitializeSmartContract(ctx)
+	if err != nil {
+			return err
+	}
+	return nil
+}
+
+func (s *SmartContract) InitializeSmartContract(ctx contractapi.TransactionContextInterface) error {
+	globalIndex, err := s.loadGlobalIndex(ctx)
+	if err != nil {
+			return err
+	}
+	s.GlobalIndex = globalIndex
+	return nil
+}
+
+func (s *SmartContract) saveGlobalIndex(ctx contractapi.TransactionContextInterface, globalIndex *CourtRequestGlobalIndex) error {
+	globalIndexJSON, err := json.Marshal(globalIndex)
+	if err != nil {
+		return fmt.Errorf("failed to marshal global index: %v", err)
+	}
+
+	err = ctx.GetStub().PutState(GlobalIndexKey, globalIndexJSON)
+	if err != nil {
+		return fmt.Errorf("failed to save global index: %v", err)
+	}
+
+	return nil
+}
+
+func (s *SmartContract) loadGlobalIndex(ctx contractapi.TransactionContextInterface) (*CourtRequestGlobalIndex, error) {
+	globalIndexJSON, err := ctx.GetStub().GetState(GlobalIndexKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load global index: %v", err)
+	}
+
+	if globalIndexJSON == nil {
+		return &CourtRequestGlobalIndex{
+			CourtByRequestID:    make(map[string]string),
+			RequestsByRequester: make(map[string][]string),
+			RequestsByDocumentID: make(map[string][]string),
+		}, nil
+	}
+
+	var globalIndex CourtRequestGlobalIndex
+	err = json.Unmarshal(globalIndexJSON, &globalIndex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal global index: %v", err)
+	}
+
+	return &globalIndex, nil
 }
 
 func (s *SmartContract) CreateCourt(ctx contractapi.TransactionContextInterface, id, court, support, office, owner string) (*Court, error) {
@@ -295,24 +351,13 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 	request.Finalized = false
 	request.FinalizedBy = "-"
 
-	// Initialize GlobalIndex maps if needed
-	if s.GlobalIndex.CourtByRequestID == nil {
-		s.GlobalIndex.CourtByRequestID = make(map[string]string)
-	}
-	if s.GlobalIndex.RequestsByRequester == nil {
-		s.GlobalIndex.RequestsByRequester = make(map[string][]string)
-	}
-	if s.GlobalIndex.RequestsByDocumentID == nil {
-		s.GlobalIndex.RequestsByDocumentID = make(map[string][]string)
-	}
-
 	s.GlobalIndex.CourtByRequestID[request.ID] = courtID
 
 	if _, exists := s.GlobalIndex.RequestsByRequester[request.RequestedBy]; !exists {
 		s.GlobalIndex.RequestsByRequester[request.RequestedBy] = []string{}
 	}
 	s.GlobalIndex.RequestsByRequester[request.RequestedBy] = append(s.GlobalIndex.RequestsByRequester[request.RequestedBy], request.ID)
-	
+
 	if _, exists := s.GlobalIndex.RequestsByDocumentID[request.DocumentID]; !exists {
 		s.GlobalIndex.RequestsByDocumentID[request.DocumentID] = []string{}
 	}
@@ -334,6 +379,11 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 	err = ctx.GetStub().PutState(courtID, courtJSON)
 	if err != nil {
 		return err
+	}
+
+	err = s.saveGlobalIndex(ctx, s.GlobalIndex)
+	if err != nil {
+		return fmt.Errorf("failed to save global index: %v", err)
 	}
 
 	return nil
@@ -390,7 +440,21 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 	delete(court.UnfinalizedRequestsByID, requestID)
 	court.FinalizedRequestsByID[requestID] = request
 
-	s.GlobalIndex.CourtByRequestID[requestID] = courtID
+	globalIndex, err := s.loadGlobalIndex(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load global index: %v", err)
+	}
+
+	globalIndex.CourtByRequestID[requestID] = courtID
+
+	globalIndexJSON, err := json.Marshal(globalIndex)
+	if err != nil {
+		return fmt.Errorf("failed to marshal global index JSON: %v", err)
+	}
+	err = ctx.GetStub().PutState(GlobalIndexKey, globalIndexJSON)
+	if err != nil {
+		return fmt.Errorf("failed to update global index: %v", err)
+	}
 
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
@@ -401,7 +465,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("failed to put court: %v", err)
 	}
 
-	eventName := "ReqeustFinalized"
+	eventName := "RequestFinalized"
 	eventPayload, err := json.Marshal(request)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event payload: %v", err)
@@ -465,12 +529,26 @@ func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterfa
 	targetCourt.RequestsByID[requestID] = &newRequest
 	targetCourt.UnfinalizedRequestsByID[requestID] = &newRequest
 	
-	if _, exists := s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID]; !exists {
-		s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID] = []string{}
+	globalIndex, err := s.loadGlobalIndex(ctx)
+	if err != nil {
+			return fmt.Errorf("failed to load global index: %v", err)
 	}
-	s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID] = append(s.GlobalIndex.RequestsByDocumentID[newRequest.DocumentID], requestID)
 
-	s.GlobalIndex.CourtByRequestID[requestID] = targetCourtID
+	if _, exists := globalIndex.RequestsByDocumentID[newRequest.DocumentID]; !exists {
+		globalIndex.RequestsByDocumentID[newRequest.DocumentID] = []string{}
+	}
+	globalIndex.RequestsByDocumentID[newRequest.DocumentID] = append(globalIndex.RequestsByDocumentID[newRequest.DocumentID], requestID)
+
+	globalIndex.CourtByRequestID[requestID] = targetCourtID
+
+	globalIndexJSON, err := json.Marshal(globalIndex)
+	if err != nil {
+		return fmt.Errorf("failed to marshal global index JSON: %v", err)
+	}
+	err = ctx.GetStub().PutState(GlobalIndexKey, globalIndexJSON)
+	if err != nil {
+		return fmt.Errorf("failed to update global index: %v", err)
+	}
 
 	currentCourtJSON, err := json.Marshal(currentCourt)
 	if err != nil {
@@ -522,21 +600,27 @@ func (s *SmartContract) GetAllFinalizedRequests(ctx contractapi.TransactionConte
 }
 
 func (s *SmartContract) GetRequestsByRequestorId(ctx contractapi.TransactionContextInterface, requestorID string) ([]CourtRequest, error) {
-	requestIDs, exists := s.GlobalIndex.RequestsByRequester[requestorID]
-	if !exists {
+	globalIndex, err := s.loadGlobalIndex(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load global index: %v", err)
+	}
+
+	requestIDs, exists := globalIndex.RequestsByRequester[requestorID]
+	if !exists || len(requestIDs) == 0 {
 		return nil, fmt.Errorf("no requests found for requester ID %s", requestorID)
 	}
 
 	var requests []CourtRequest
+
 	for _, requestID := range requestIDs {
-		courtID, exists := s.GlobalIndex.CourtByRequestID[requestID]
+		courtID, exists := globalIndex.CourtByRequestID[requestID]
 		if !exists {
 			continue
 		}
 
 		court, err := s.GetCourtByID(ctx, courtID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get court by ID %s: %v", courtID, err)
 		}
 
 		request, exists := court.RequestsByID[requestID]
