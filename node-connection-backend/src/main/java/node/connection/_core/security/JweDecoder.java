@@ -27,8 +27,7 @@ public class JweDecoder {
     @Value("${security.jwe.secret}")
     private String secret;
 
-    @Value("${security.jwe.salt}")
-    private String salt;
+    private final String salt = "";
 
     public String decode(String token) {
         KeyParameter parameter = getDerivedEncryptionKey(secret, salt);
