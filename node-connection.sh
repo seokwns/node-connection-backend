@@ -219,10 +219,10 @@ function export_config() {
     echo '' >> hyperledger.config.sh
     echo '# Fabric CA Information' >> hyperledger.config.sh
     echo 'CA_REGISTRY_NAME=ca-registry' >> hyperledger.config.sh
-    echo 'CA_REGISTRY_URL=http://localhost:7054' >> hyperledger.config.sh
+    echo 'CA_REGISTRY_URL=https://localhost:7054' >> hyperledger.config.sh
     echo "CA_REGISTRY_PEM=$current_dir/network/node-connection-network/organizations/fabric-ca/registry/ca-cert.pem" >> hyperledger.config.sh
     echo 'CA_VIEWER_NAME=ca-viewer' >> hyperledger.config.sh
-    echo 'CA_VIEWER_URL=http://localhost:8054' >> hyperledger.config.sh
+    echo 'CA_VIEWER_URL=https://localhost:8054' >> hyperledger.config.sh
     echo "CA_VIEWER_PEM=$current_dir/network/node-connection-network/organizations/fabric-ca/viewer/ca-cert.pem" >> hyperledger.config.sh
     echo 'CA_ADMIN_NAME=admin' >> hyperledger.config.sh
     echo 'CA_ADMIN_PASSWORD=adminpw' >> hyperledger.config.sh
