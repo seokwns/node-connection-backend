@@ -26,6 +26,7 @@ public class ConfigDataService {
     @Autowired
     private FabricConfig fabricConfig;
 
+
     // key로 value 조회
     public Optional<String> getValueByKey(String key) {
         return configDataRepository.findByKey(key).map(ConfigData::getValue);
