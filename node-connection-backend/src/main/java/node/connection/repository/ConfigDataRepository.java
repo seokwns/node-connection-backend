@@ -1,4 +1,5 @@
 package node.connection.repository;
+
 import node.connection.entity.ConfigData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
