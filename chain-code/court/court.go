@@ -418,7 +418,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 		return errors.New("only the owner or members can finalize requests")
 	}
 
-	request, exists := court.RequestByID[requestID]
+	request, exists := court.RequestsByID[requestID]
 	if !exists {
 		return fmt.Errorf("request with ID %s does not exist in court %s", requestID, courtID)
 	}
