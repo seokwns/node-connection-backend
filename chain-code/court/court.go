@@ -384,7 +384,7 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 	}
 
 	court.RequestsByID[request.ID] = &request
-	court.UnfinalizedRequestsByID[request.ID] = &court.RequestsByID[request.ID]
+	court.UnfinalizedRequestsByID[request.ID] = &request
 
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
@@ -418,7 +418,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 		return errors.New("only the owner or members can finalize requests")
 	}
 
-	request, exists := court.RequestById[requestID]
+	request, exists := court.RequestByID[requestID]
 	if !exists {
 		return fmt.Errorf("request with ID %s does not exist in court %s", requestID, courtID)
 	}
@@ -456,7 +456,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 	request.FinalizedBy = clientID
 
 	delete(court.UnfinalizedRequestsByID, requestID)
-	court.FinalizedRequestsByID[requestID] = &court.RequestById[requestID]
+	court.FinalizedRequestsByID[requestID] = request
 
 	globalIndex, err := s.loadGlobalIndex(ctx)
 	if err != nil {
@@ -537,7 +537,7 @@ func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterfa
 	request.FinalizedBy = clientID
 
 	delete(currentCourt.UnfinalizedRequestsByID, requestID)
-	currentCourt.FinalizedRequestsByID[requestID] = &currentCourt.RequestsByID[requestID]
+	currentCourt.FinalizedRequestsByID[requestID] = request
 
 	newRequest := *request
 	newRequest.Finalized = false
@@ -546,7 +546,7 @@ func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterfa
 	newRequest.Status = "Pending"
 	newRequest.ForwardedFrom = currentCourt.ID
 	targetCourt.RequestsByID[requestID] = &newRequest
-	targetCourt.UnfinalizedRequestsByID[requestID] = &targetCourt.RequestsByID[requestID]
+	targetCourt.UnfinalizedRequestsByID[requestID] = &newRequest
 	
 	globalIndex, err := s.loadGlobalIndex(ctx)
 	if err != nil {
