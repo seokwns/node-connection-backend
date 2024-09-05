@@ -15,7 +15,7 @@ import node.connection.dto.court.request.DeleteCourtMemberRequest;
 import node.connection.dto.court.request.FinalizeCourtRequest;
 import node.connection.dto.court.response.FabricCourt;
 import node.connection.dto.court.response.FabricCourtRequest;
-import node.connection.dto.registry.request.RegistryCreateRequest;
+import node.connection.dto.registry.request.*;
 import node.connection.dto.wallet.CourtWalletCreateRequest;
 import node.connection.entity.Court;
 import node.connection.entity.CourtWalletConfig;
@@ -215,8 +215,8 @@ public class CourtService {
     }
 
     public void createRegistryCourtRequest(CustomUserDetails userDetails, String courtId, RegistryCreateRequest request) {
-        String requestId = String.valueOf(UUID.randomUUID());
-        String documentId = String.valueOf(UUID.randomUUID());
+        String requestId = this.createId();
+        String documentId = this.createId();
         RegistryDocument registryDocument = this.registryBuilder.build(documentId, request.document());
         String documentJson = this.objectMapper.writeValueAsString(registryDocument);
 
@@ -225,6 +225,114 @@ public class CourtService {
                 .documentId(documentId)
                 .action("CreateRegistryDocument")
                 .payload(documentJson)
+                .build();
+
+        this.invokeAddRequest(userDetails.getUsername(), courtId, courtRequest);
+    }
+
+    public void addBuildingDescriptionToTitleSection(
+            CustomUserDetails userDetails,
+            String courtId,
+            AddBuildingDescriptionToTitleSection data
+    ) {
+        String requestId = this.createId();
+        String payload = this.objectMapper.writeValueAsString(data.buildingDescription());
+
+        CourtRequest courtRequest = CourtRequest.builder()
+                .id(requestId)
+                .documentId(data.documentId())
+                .action("AddBuildingDescriptionToTitleSection")
+                .payload(payload)
+                .build();
+
+        this.invokeAddRequest(userDetails.getUsername(), courtId, courtRequest);
+    }
+
+    public void addLandDescriptionToTitleSection(
+            CustomUserDetails userDetails,
+            String courtId,
+            AddLandDescriptionToTitleSection data
+    ) {
+        String requestId = this.createId();
+        String payload = this.objectMapper.writeValueAsString(data.landDescription());
+
+        CourtRequest courtRequest = CourtRequest.builder()
+                .id(requestId)
+                .documentId(data.documentId())
+                .action("AddBuildingDescriptionToTitleSection")
+                .payload(payload)
+                .build();
+
+        this.invokeAddRequest(userDetails.getUsername(), courtId, courtRequest);
+    }
+
+    public void addBuildingDescriptionToExclusivePart(
+            CustomUserDetails userDetails,
+            String courtId,
+            AddBuildingPartDescriptionToExclusivePart data
+    ) {
+        String requestId = this.createId();
+        String payload = this.objectMapper.writeValueAsString(data.buildingPartDescription());
+
+        CourtRequest courtRequest = CourtRequest.builder()
+                .id(requestId)
+                .documentId(data.documentId())
+                .action("AddBuildingDescriptionToExclusivePart")
+                .payload(payload)
+                .build();
+
+        this.invokeAddRequest(userDetails.getUsername(), courtId, courtRequest);
+    }
+
+    public void addLandRightDescriptionToExclusivePart(
+            CustomUserDetails userDetails,
+            String courtId,
+            AddLandRightDescriptionToExclusivePart data
+    ) {
+        String requestId = this.createId();
+        String payload = this.objectMapper.writeValueAsString(data.landRightDescription());
+
+        CourtRequest courtRequest = CourtRequest.builder()
+                .id(requestId)
+                .documentId(data.documentId())
+                .action("AddLandRightDescriptionToExclusivePart")
+                .payload(payload)
+                .build();
+
+        this.invokeAddRequest(userDetails.getUsername(), courtId, courtRequest);
+    }
+
+    public void addFirstSectionEntry(
+            CustomUserDetails userDetails,
+            String courtId,
+            AddFirstSectionEntry data
+    ) {
+        String requestId = this.createId();
+        String payload = this.objectMapper.writeValueAsString(data.firstSection());
+
+        CourtRequest courtRequest = CourtRequest.builder()
+                .id(requestId)
+                .documentId(data.documentId())
+                .action("AddFirstSectionEntry")
+                .payload(payload)
+                .build();
+
+        this.invokeAddRequest(userDetails.getUsername(), courtId, courtRequest);
+    }
+
+    public void addSecondSectionEntry(
+            CustomUserDetails userDetails,
+            String courtId,
+            AddSecondSectionEntry data
+    ) {
+        String requestId = this.createId();
+        String payload = this.objectMapper.writeValueAsString(data.secondSection());
+
+        CourtRequest courtRequest = CourtRequest.builder()
+                .id(requestId)
+                .documentId(data.documentId())
+                .action("AddFirstSectionEntry")
+                .payload(payload)
                 .build();
 
         this.invokeAddRequest(userDetails.getUsername(), courtId, courtRequest);
@@ -257,8 +365,12 @@ public class CourtService {
         FabricProposalResponse response = connector.invoke("FinalizeRequest", params);
 
         if (!response.getSuccess()) {
-            log.error("add court request error: {}, payload: {}", response.getMessage(), response.getPayload());
+            log.error("finalize court request error: {}, payload: {}", response.getMessage(), response.getPayload());
             throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
         }
+    }
+
+    private String createId() {
+        return String.valueOf(UUID.randomUUID());
     }
 }

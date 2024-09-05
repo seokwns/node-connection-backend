@@ -10,7 +10,6 @@ public record FabricCourt(
         String office,
         String owner,
         List<String> members,
-        List<FabricCourtRequest> requests,
         Map<String, FabricCourtRequest> requestsByID,
         Map<String, FabricCourtRequest> finalizedRequestsByID,
         Map<String, FabricCourtRequest> unfinalizedRequestsByID

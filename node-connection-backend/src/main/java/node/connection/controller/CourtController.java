@@ -8,7 +8,7 @@ import node.connection.dto.court.request.DeleteCourtMemberRequest;
 import node.connection.dto.court.request.FinalizeCourtRequest;
 import node.connection.dto.court.response.FabricCourt;
 import node.connection.dto.court.response.FabricCourtRequest;
-import node.connection.dto.registry.request.RegistryCreateRequest;
+import node.connection.dto.registry.request.*;
 import node.connection.service.CourtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -85,6 +85,66 @@ public class CourtController {
             @RequestBody RegistryCreateRequest request
     ) {
         this.courtService.createRegistryCourtRequest(userDetails, courtId, request);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PatchMapping("/{id}/request/title/building-description")
+    public ResponseEntity<?> addBuildingDescriptionToTitleSection(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") String courtId,
+            @RequestBody AddBuildingDescriptionToTitleSection data
+    ) {
+        this.courtService.addBuildingDescriptionToTitleSection(userDetails, courtId, data);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PatchMapping("/{id}/request/title/land-description")
+    public ResponseEntity<?> addLandDescriptionToTitleSection(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") String courtId,
+            @RequestBody AddLandDescriptionToTitleSection data
+    ) {
+        this.courtService.addLandDescriptionToTitleSection(userDetails, courtId, data);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PatchMapping("/{id}/request/exclusive/building-description")
+    public ResponseEntity<?> addBuildingDescriptionToExclusivePart(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") String courtId,
+            @RequestBody AddBuildingPartDescriptionToExclusivePart data
+    ) {
+        this.courtService.addBuildingDescriptionToExclusivePart(userDetails, courtId, data);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PatchMapping("/{id}/request/exclusive/land-rights")
+    public ResponseEntity<?> addLandRightDescriptionToExclusivePart(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") String courtId,
+            @RequestBody AddLandRightDescriptionToExclusivePart data
+    ) {
+        this.courtService.addLandRightDescriptionToExclusivePart(userDetails, courtId, data);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PatchMapping("/{id}/request/first")
+    public ResponseEntity<?> addFirstSectionEntry(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") String courtId,
+            @RequestBody AddFirstSectionEntry data
+    ) {
+        this.courtService.addFirstSectionEntry(userDetails, courtId, data);
+        return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PatchMapping("/{id}/request/second")
+    public ResponseEntity<?> addSecondSectionEntry(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") String courtId,
+            @RequestBody AddSecondSectionEntry data
+    ) {
+        this.courtService.addSecondSectionEntry(userDetails, courtId, data);
         return ResponseEntity.ok().body(Response.success(null));
     }
 
