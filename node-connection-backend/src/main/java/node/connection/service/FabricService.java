@@ -140,7 +140,7 @@ public class FabricService {
             registerToRegistryMSP(number, password);
         }
 
-        walletService.createUserWallet(new UserWalletCreateRequest(number, password));
+//        walletService.createUserWallet(new UserWalletCreateRequest(number, password));
     }
 
     public void registerToViewerMSP(String phoneNumber, String secret) {

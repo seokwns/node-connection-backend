@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class IndyConnector {
 
-    private final Pool pool;
+//    private final Pool pool;
     private final WalletConfigFactory walletConfigFactory;
     private final IndyUtils indyUtils;
 
@@ -25,7 +25,7 @@ public class IndyConnector {
     ) {
         this.walletConfigFactory = walletConfigFactory;
         this.indyUtils = indyUtils;
-        this.pool = this.indyUtils.initializeIndyConnectionPool();
+//        this.pool = this.indyUtils.initializeIndyConnectionPool();
     }
 
     public void createUserWallet(String phoneNumber, String password) {
