@@ -1,4 +1,4 @@
-package node.connection;
+package node.connection.entity;
 
 import jakarta.persistence.*;
 

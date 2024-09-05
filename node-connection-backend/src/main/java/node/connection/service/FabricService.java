@@ -8,7 +8,6 @@ import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
 import node.connection._core.utils.Mapper;
 import node.connection.dto.registry.RegistryDocumentDto;
-import node.connection.dto.wallet.UserWalletCreateRequest;
 import node.connection.entity.UserAccount;
 import node.connection.entity.constant.Role;
 import node.connection.hyperledger.FabricConfig;
@@ -49,9 +48,6 @@ public class FabricService {
 
     private final UserAccountRepository userAccountRepository;
 
-    private final WalletService walletService;
-
-
     public final static String VIEWER_MSP = "ViewerMSP";
 
     public final static String REGISTRY_MSP = "RegistryMSP";
@@ -62,14 +58,12 @@ public class FabricService {
             @Autowired FabricConfig fabricConfig,
             @Autowired Mapper objectMapper,
             @Autowired PasswordEncoder passwordEncoder,
-            @Autowired UserAccountRepository userAccountRepository,
-            @Autowired WalletService walletService
+            @Autowired UserAccountRepository userAccountRepository
     ) {
         this.fabricConfig = fabricConfig;
         this.objectMapper = objectMapper;
         this.passwordEncoder = passwordEncoder;
         this.userAccountRepository = userAccountRepository;
-        this.walletService = walletService;
 
         CAInfo registryCaInfo = CAInfo.builder()
                 .name(this.fabricConfig.getRegistryCaName())
@@ -139,8 +133,6 @@ public class FabricService {
         else {
             registerToRegistryMSP(number, password);
         }
-
-//        walletService.createUserWallet(new UserWalletCreateRequest(number, password));
     }
 
     public void registerToViewerMSP(String phoneNumber, String secret) {
@@ -255,21 +247,6 @@ public class FabricService {
 
     public FabricProposalResponse query(String fcn, List<String> params) {
         return this.fabricConnector.query(fcn, params);
-    }
-
-    public RegistryDocumentDto getRegistryDocumentById(String id) {
-        return this.getRegistryDocumentById(this.fabricConnector, id);
-    }
-
-    public RegistryDocumentDto getRegistryDocumentById(FabricConnector connector, String id) {
-        List<String> params = List.of(id);
-        connector.setChaincode("registry", "1.0.0");
-        FabricProposalResponse response = connector.query("GetRegistryDocumentByID", params);
-        log.debug(String.valueOf(response));
-
-        String payload = response.getPayload();
-        log.info("registry payload: {}", payload);
-        return this.objectMapper.readValue(payload, RegistryDocumentDto.class);
     }
 
     public static String getId(String msp, String number) {

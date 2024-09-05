@@ -8,6 +8,7 @@ import node.connection.dto.court.request.DeleteCourtMemberRequest;
 import node.connection.dto.court.request.FinalizeCourtRequest;
 import node.connection.dto.court.response.FabricCourt;
 import node.connection.dto.court.response.FabricCourtRequest;
+import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.dto.registry.request.*;
 import node.connection.service.CourtService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,17 +73,11 @@ public class CourtController {
         return ResponseEntity.ok().body(Response.success(requests));
     }
 
-    @GetMapping("/request")
-    public ResponseEntity<?> getCourtRequestsByRequestorId(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        List<FabricCourtRequest> requests = this.courtService.getCourtRequestsByRequestorId(userDetails);
-        return ResponseEntity.ok().body(Response.success(requests));
-    }
-
     @PostMapping("/{id}/request/registry")
     public ResponseEntity<?> createRegistryCourtRequest(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") String courtId,
-            @RequestBody RegistryCreateRequest request
+            @RequestBody RegistryDocumentDto request
     ) {
         this.courtService.createRegistryCourtRequest(userDetails, courtId, request);
         return ResponseEntity.ok().body(Response.success(null));

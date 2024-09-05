@@ -15,15 +15,14 @@ import node.connection.dto.court.request.DeleteCourtMemberRequest;
 import node.connection.dto.court.request.FinalizeCourtRequest;
 import node.connection.dto.court.response.FabricCourt;
 import node.connection.dto.court.response.FabricCourtRequest;
+import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.dto.registry.request.*;
-import node.connection.dto.wallet.CourtWalletCreateRequest;
 import node.connection.entity.Court;
-import node.connection.entity.CourtWalletConfig;
 import node.connection.entity.Jurisdiction;
+import node.connection.hyperledger.FabricConfig;
 import node.connection.hyperledger.fabric.FabricConnector;
 import node.connection.hyperledger.fabric.FabricProposalResponse;
 import node.connection.repository.CourtRepository;
-import node.connection.repository.CourtWalletConfigRepository;
 import node.connection.repository.JurisdictionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,11 +38,9 @@ public class CourtService {
 
     private final FabricService fabricService;
 
-    private final WalletService walletService;
+    private final FabricConfig fabricConfig;
 
     private final CourtRepository courtRepository;
-
-    private final CourtWalletConfigRepository walletConfigRepository;
 
     private final JurisdictionRepository jurisdictionRepository;
 
@@ -51,22 +48,18 @@ public class CourtService {
 
     private final RegistryBuilder registryBuilder;
 
-    private String COURT_CHAINCODE_VERSION = "1.0.2";
-
 
     public CourtService(
             @Autowired FabricService fabricService,
-            @Autowired WalletService walletService,
+            @Autowired FabricConfig fabricConfig,
             @Autowired CourtRepository courtRepository,
-            @Autowired CourtWalletConfigRepository walletConfigRepository,
             @Autowired JurisdictionRepository jurisdictionRepository,
             @Autowired Mapper objectMapper,
             @Autowired RegistryBuilder registryBuilder
     ) {
         this.fabricService = fabricService;
-        this.walletService = walletService;
+        this.fabricConfig = fabricConfig;
         this.courtRepository = courtRepository;
-        this.walletConfigRepository = walletConfigRepository;
         this.jurisdictionRepository = jurisdictionRepository;
         this.objectMapper = objectMapper;
         this.registryBuilder = registryBuilder;
@@ -79,26 +72,14 @@ public class CourtService {
         Court court = Court.of(request);
         this.courtRepository.save(court);
 
-        CourtWalletConfig walletConfig = CourtWalletConfig.of(courtId, request.getWalletPassword(), court);
-        this.walletConfigRepository.save(walletConfig);
-
         List<Jurisdiction> jurisdictions = new ArrayList<>();
         request.getJurisdictions().forEach(jurisdiction -> {
             jurisdictions.add(Jurisdiction.of(jurisdiction, court));
         });
         this.jurisdictionRepository.saveAll(jurisdictions);
 
-        this.walletService.createCourtWallet(
-                new CourtWalletCreateRequest(
-                        request.getCourt(),
-                        request.getSupport(),
-                        request.getOffice(),
-                        request.getWalletPassword()
-                )
-        );
-
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
-        connector.setChaincode("court", COURT_CHAINCODE_VERSION);
+        connector.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
 
         List<String> params = List.of(
                 courtId,
@@ -116,7 +97,7 @@ public class CourtService {
     }
 
     public FabricCourt getCourtById(String id) {
-        this.fabricService.setChaincode("court", COURT_CHAINCODE_VERSION);
+        this.fabricService.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
         FabricProposalResponse response = this.fabricService.query("GetCourtByID", List.of(id));
 
         if (!response.getSuccess()) {
@@ -129,7 +110,7 @@ public class CourtService {
 
     public void addCourtMember(CustomUserDetails userDetails, AddCourtMemberRequest request) {
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
-        connector.setChaincode("court", COURT_CHAINCODE_VERSION);
+        connector.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
 
         List<String> params = List.of(
                 request.getCourtId(),
@@ -146,7 +127,7 @@ public class CourtService {
     public void deleteCourtMember(CustomUserDetails userDetails, DeleteCourtMemberRequest request) {
         String courtId = request.getCourtId();
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
-        connector.setChaincode("court", COURT_CHAINCODE_VERSION);
+        connector.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
 
         List<String> params = List.of(
                 courtId,
@@ -161,7 +142,7 @@ public class CourtService {
     }
 
     public List<FabricCourtRequest> getUnfinalizedRequests(String id) {
-        this.fabricService.setChaincode("court", COURT_CHAINCODE_VERSION);
+        this.fabricService.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
 
         List<String> params = List.of(id);
         FabricProposalResponse response = this.fabricService.query("GetAllUnfinalizedRequests", params);
@@ -179,7 +160,7 @@ public class CourtService {
     }
 
     public List<FabricCourtRequest> getFinalizedRequests(String id) {
-        this.fabricService.setChaincode("court", COURT_CHAINCODE_VERSION);
+        this.fabricService.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
 
         List<String> params = List.of(id);
         FabricProposalResponse response = this.fabricService.query("GetAllFinalizedRequests", params);
@@ -196,28 +177,10 @@ public class CourtService {
         return this.objectMapper.readValue(response.getPayload(), new TypeReference<List<FabricCourtRequest>>() {});
     }
 
-    public List<FabricCourtRequest> getCourtRequestsByRequestorId(CustomUserDetails userDetails) {
-        this.fabricService.setChaincode("court", COURT_CHAINCODE_VERSION);
-
-        List<String> params = List.of(userDetails.getUsername());
-        FabricProposalResponse response = this.fabricService.query("GetRequestsByRequestorId", params);
-
-        if (!response.getSuccess()) {
-            log.error("get court request error: {}, payload: {}", response.getMessage(), response.getPayload());
-            throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
-        }
-
-        if (response.getPayload().isEmpty()) {
-            return List.of();
-        }
-
-        return this.objectMapper.readValue(response.getPayload(), new TypeReference<List<FabricCourtRequest>>() {});
-    }
-
-    public void createRegistryCourtRequest(CustomUserDetails userDetails, String courtId, RegistryCreateRequest request) {
+    public void createRegistryCourtRequest(CustomUserDetails userDetails, String courtId, RegistryDocumentDto document) {
         String requestId = this.createId();
         String documentId = this.createId();
-        RegistryDocument registryDocument = this.registryBuilder.build(documentId, request.document());
+        RegistryDocument registryDocument = this.registryBuilder.build(documentId, document);
         String documentJson = this.objectMapper.writeValueAsString(registryDocument);
 
         CourtRequest courtRequest = CourtRequest.builder()
@@ -340,7 +303,7 @@ public class CourtService {
 
     private void invokeAddRequest(String user, String courtId, CourtRequest request) {
         FabricConnector connector = this.fabricService.getConnectorById(user);
-        connector.setChaincode("court", COURT_CHAINCODE_VERSION);
+        connector.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
 
         String requestJson = this.objectMapper.writeValueAsString(request);
         List<String> params = List.of(courtId, requestJson);
@@ -354,7 +317,7 @@ public class CourtService {
 
     public void finalizeCourtRequest(CustomUserDetails userDetails, String courtId, FinalizeCourtRequest request) {
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
-        connector.setChaincode("court", COURT_CHAINCODE_VERSION);
+        connector.setChaincode("court", this.fabricConfig.getCourtChainCodeVersion());
 
         List<String> params = List.of(
                 courtId,
