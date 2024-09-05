@@ -379,7 +379,7 @@ function start_application() {
 
     echo -e "${YELLOW}Checking Hyperledger installation...${NC}"
     setup_hyperledger_fabric
-    setup_hyperledger_indy
+    # setup_hyperledger_indy
 
     echo -e "${YELLOW}Starting node-connection network...${NC}"
     ./node-connection-network.sh up

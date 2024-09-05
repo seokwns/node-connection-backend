@@ -26,7 +26,6 @@ type Court struct {
 	Office               		string               			`json:"office"`
 	Owner                		string               			`json:"owner"`
 	Members              		[]string             			`json:"members"`
-	Requests                []*CourtRequest           `json:"requests"`
 	RequestsByID            map[string]*CourtRequest 	`json:"requestsByID"`
 	FinalizedRequestsByID   map[string]*CourtRequest 	`json:"finalizedRequestsByID"`
 	UnfinalizedRequestsByID map[string]*CourtRequest 	`json:"unfinalizedRequestsByID"`
@@ -128,7 +127,6 @@ func (s *SmartContract) CreateCourt(ctx contractapi.TransactionContextInterface,
 		Office:                 office,
 		Owner:                  owner,
 		Members:                []string{},
-		Requests:               []*CourtRequest{},
 		RequestsByID:           make(map[string]*CourtRequest),
 		FinalizedRequestsByID:  make(map[string]*CourtRequest),
 		UnfinalizedRequestsByID: make(map[string]*CourtRequest),
@@ -384,10 +382,9 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 	if _, exists := court.UnfinalizedRequestsByID[request.ID]; exists {
 		return errors.New("a request with the same ID already exists")
 	}
-	court.UnfinalizedRequestsByID[request.ID] = &request
 
 	court.RequestsByID[request.ID] = &request
-	court.Requests = append(court.Requests, &request)
+	court.UnfinalizedRequestsByID[request.ID] = &request
 
 	courtJSON, err := json.Marshal(court)
 	if err != nil {
@@ -421,7 +418,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 		return errors.New("only the owner or members can finalize requests")
 	}
 
-	request, exists := court.UnfinalizedRequestsByID[requestID]
+	request, exists := court.RequestsByID[requestID]
 	if !exists {
 		return fmt.Errorf("request with ID %s does not exist in court %s", requestID, courtID)
 	}
@@ -450,8 +447,12 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 		request.ErrorMessage = errorMessage
 	}
 
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+			return fmt.Errorf("failed to load location: %v", err)
+	}
 	request.Finalized = true
-	request.FinalizeDate = time.Now().Format(time.RFC3339)
+	request.FinalizeDate = time.Now().In(loc).Format(time.RFC3339)
 	request.FinalizedBy = clientID
 
 	delete(court.UnfinalizedRequestsByID, requestID)
@@ -524,8 +525,13 @@ func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterfa
 		return fmt.Errorf("request with ID %s already exists in target court %s", requestID, targetCourtID)
 	}
 
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+			return fmt.Errorf("failed to load location: %v", err)
+	}
+
 	request.Finalized = true
-	request.FinalizeDate = time.Now().Format(time.RFC3339)
+	request.FinalizeDate = time.Now().In(loc).Format(time.RFC3339)
 	request.Status = "Forwarded"
 	request.ForwardedTo = targetCourtID
 	request.FinalizedBy = clientID
