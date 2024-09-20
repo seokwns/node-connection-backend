@@ -45,6 +45,16 @@ public class ConfigDataService {
         }
     }
 
+    public String getCourtChainCodeVersion() {
+        return this.getValueByKey(COURT_CHAIN_CODE)
+                .orElseThrow(() -> new ServerException(ExceptionStatus.KEY_NOT_FOUND));
+    }
+
+    public String getRegistryChainCodeVersion() {
+        return this.getValueByKey(REGISTRY_CHAIN_CODE)
+                .orElseThrow(() -> new ServerException(ExceptionStatus.KEY_NOT_FOUND));
+    }
+
     public void updateCourtChainCodeVersion(String version) {
         this.updateValueByKey(COURT_CHAIN_CODE, version);
         this.fabricConfig.setCourtChainCodeVersion(version);

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import node.connection._core.utils.Hash;
 import node.connection.dto.court.request.CourtCreateRequest;
 import node.connection.entity.pk.CourtKey;
 
@@ -27,6 +28,9 @@ public class Court {
     @Column
     private String faxNumber;
 
+    @Column
+    private String registerCode;
+
     @Column(nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
@@ -34,11 +38,12 @@ public class Court {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Court(CourtKey key, String phoneNumber, String address, String faxNumber, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Court(CourtKey key, String phoneNumber, String address, String faxNumber, String registerCode, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.key = key;
         this.phoneNumber = phoneNumber;
         this.address = address;
         this.faxNumber = faxNumber;
+        this.registerCode = registerCode;
         this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
         this.updatedAt = updatedAt == null ? LocalDateTime.now() : updatedAt;
     }
@@ -50,11 +55,14 @@ public class Court {
                 .office(office)
                 .build();
 
+        String registerCode = Hash.generate();
+
         return Court.builder()
                 .key(courtKey)
                 .phoneNumber(phoneNumber)
                 .address(address)
                 .faxNumber(faxNumber)
+                .registerCode(registerCode)
                 .build();
     }
 
@@ -65,11 +73,14 @@ public class Court {
                 .office(request.getOffice())
                 .build();
 
+        String registerCode = Hash.generate();
+
         return Court.builder()
                 .key(courtKey)
                 .phoneNumber(request.getPhoneNumber())
                 .address(request.getAddress())
                 .faxNumber(request.getFaxNumber())
+                .registerCode(registerCode)
                 .build();
     }
 }

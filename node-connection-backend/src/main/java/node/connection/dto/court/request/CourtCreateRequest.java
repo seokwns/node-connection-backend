@@ -12,7 +12,6 @@ public class CourtCreateRequest extends BaseCourtRequest {
     private final String address;
     private final String faxNumber;
     private final List<String> jurisdictions;
-    private final String walletPassword;
 
     @JsonCreator
     public CourtCreateRequest(
@@ -22,14 +21,12 @@ public class CourtCreateRequest extends BaseCourtRequest {
             @JsonProperty("phoneNumber") String phoneNumber,
             @JsonProperty("address") String address,
             @JsonProperty("faxNumber") String faxNumber,
-            @JsonProperty("jurisdictions") List<String> jurisdictions,
-            @JsonProperty("walletPassword") String walletPassword
+            @JsonProperty("jurisdictions") List<String> jurisdictions
     ) {
         super(court, support, office);
         this.phoneNumber = phoneNumber;
         this.address = address;
         this.faxNumber = faxNumber;
         this.jurisdictions = jurisdictions;
-        this.walletPassword = walletPassword;
     }
 }

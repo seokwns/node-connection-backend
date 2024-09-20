@@ -37,7 +37,7 @@ public class RegistryService {
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
 
         List<String> params = List.of(id);
-        connector.setChaincode("registry", this.fabricConfig.getRegistryChainCodeVersion());
+        connector.setChaincode(FabricConfig.REGISTRY_CHAIN_CODE, this.fabricConfig.getRegistryChainCodeVersion());
         FabricProposalResponse response = connector.query("GetRegistryDocumentByID", params);
 
         String payload = response.getPayload();

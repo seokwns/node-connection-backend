@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 @Getter
 public class FabricConfig {
 
+    public static String COURT_CHAIN_CODE = "court";
+
+    public static String REGISTRY_CHAIN_CODE = "registry";
+
     private String registryChainCodeVersion = "1.0.0";
 
     private String courtChainCodeVersion = "1.0.2";

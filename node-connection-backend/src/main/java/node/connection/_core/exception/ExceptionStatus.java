@@ -1,6 +1,5 @@
 package node.connection._core.exception;
 
-import com.google.api.Http;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +19,7 @@ public enum ExceptionStatus {
     JWT_DECODE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "1008", "JWT 디코드 과정에서 에러가 발생했습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "1009", "존재하지 않는 유저입니다."),
     KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "1010", "키를 찾을 수 없습니다."),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "1011", "비밀번호가 일치하지 않습니다."),
 
     INDY_INITIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2000", "Indy 초기화 중 에러가 발생했습니다."),
     WALLET_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2001", "지갑 생성 중 에러가 발생했습니다."),
@@ -45,7 +45,9 @@ public enum ExceptionStatus {
     PROPOSAL_RESPONSE_INTERCEPTOR_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3009", "Proposal response 처리 과정에서 에러가 발생했습니다."),
     FABRIC_CHAINCODE_UPGRADE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3010", "체인코드 업그레이드 과정에서 에러가 발생했습니다."),
     FABRIC_QUERY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3011", "패브릭 쿼리 중 에러가 발생했습니다."),
-    FABRIC_INVOKE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3012", "패브릭 함수 호출 중 에러가 발생했습니다.")
+    FABRIC_INVOKE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "3012", "패브릭 함수 호출 중 에러가 발생했습니다."),
+
+    NOT_SUPPORT_LOCATION(HttpStatus.BAD_REQUEST, "4000", "지원하지 않는 지역입니다.")
     ;
 
     private final HttpStatus status;

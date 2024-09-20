@@ -2,9 +2,6 @@ package node.connection.controller;
 
 import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
-import node.connection.dto.court.request.AddCourtMemberRequest;
-import node.connection.dto.court.request.CourtCreateRequest;
-import node.connection.dto.court.request.DeleteCourtMemberRequest;
 import node.connection.dto.court.request.FinalizeCourtRequest;
 import node.connection.dto.court.response.FabricCourt;
 import node.connection.dto.court.response.FabricCourtRequest;
@@ -32,33 +29,6 @@ public class CourtController {
     public ResponseEntity<?> getCourtById(@PathVariable("id") String id) {
         FabricCourt court = this.courtService.getCourtById(id);
         return ResponseEntity.ok().body(Response.success(court));
-    }
-
-    @PostMapping("")
-    public ResponseEntity<?> createNewCourt(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody CourtCreateRequest request
-    ) {
-        this.courtService.createCourt(userDetails, request);
-        return ResponseEntity.ok().body(Response.success(null));
-    }
-
-    @PostMapping("/member")
-    public ResponseEntity<?> addCourtMember(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody AddCourtMemberRequest request
-    ) {
-        this.courtService.addCourtMember(userDetails, request);
-        return ResponseEntity.ok().body(Response.success(null));
-    }
-
-    @DeleteMapping("/member")
-    public ResponseEntity<?> deleteCourtMember(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody DeleteCourtMemberRequest request
-    ) {
-        this.courtService.deleteCourtMember(userDetails, request);
-        return ResponseEntity.ok().body(Response.success(null));
     }
 
     @GetMapping("/{id}/request/unfinalized")

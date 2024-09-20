@@ -1,5 +1,6 @@
 package node.connection.service;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.client.BadRequestException;
@@ -7,7 +8,7 @@ import node.connection._core.exception.client.NotFoundException;
 import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
 import node.connection._core.utils.Mapper;
-import node.connection.dto.registry.RegistryDocumentDto;
+import node.connection.dto.user.request.JoinDTO;
 import node.connection.entity.UserAccount;
 import node.connection.entity.constant.Role;
 import node.connection.hyperledger.FabricConfig;
@@ -44,8 +45,10 @@ public class FabricService {
 
     private final Mapper objectMapper;
 
+    @Getter
     private final PasswordEncoder passwordEncoder;
 
+    @Getter
     private final UserAccountRepository userAccountRepository;
 
     public final static String VIEWER_MSP = "ViewerMSP";
@@ -121,21 +124,19 @@ public class FabricService {
         log.info("채널 연결 완료");
     }
 
-    public void register(CustomUserDetails userDetails) {
+    public FabricConnector getRootFabricConnector() {
+        return fabricConnector;
+    }
+
+    public void register(CustomUserDetails userDetails, JoinDTO joinDTO) {
         String name = userDetails.getUsername();
-        String mspId = name.split(ID_DELIMITER)[0];
         String number = name.split(ID_DELIMITER)[1];
         String password = userDetails.getPassword();
 
-        if (mspId.equals(VIEWER_MSP)) {
-            registerToViewerMSP(number, password);
-        }
-        else {
-            registerToRegistryMSP(number, password);
-        }
+        registerToViewerMSP(number, password, joinDTO);
     }
 
-    public void registerToViewerMSP(String phoneNumber, String secret) {
+    public void registerToViewerMSP(String phoneNumber, String secret, JoinDTO joinDTO) {
         String id = getId(VIEWER_MSP, phoneNumber);
         String response = this.viewerCAConnector.register(id, secret, HFCAClient.HFCA_TYPE_USER, this.viewerRegistrar);
 
@@ -144,7 +145,7 @@ public class FabricService {
         if (response == null) {
             log.info("id {} already registered. try re-enroll.", id);
 
-            UserAccount userAccount = this.userAccountRepository.findByName(id)
+            UserAccount userAccount = this.userAccountRepository.findByFabricId(id)
                     .orElseThrow(() -> new NotFoundException(ExceptionStatus.USER_NOT_FOUND));
 
             Registrar newRegistrar = Registrar.builder()
@@ -158,10 +159,10 @@ public class FabricService {
             enrollment = this.viewerCAConnector.enroll(id, secret);
         }
 
-        this.saveRegister(VIEWER_MSP, id, phoneNumber, secret, enrollment);
+        this.saveRegister(VIEWER_MSP, id, phoneNumber, secret, enrollment, joinDTO);
     }
 
-    public void registerToRegistryMSP(String number, String secret) {
+    public UserAccount registerToRegistryMSP(String number, String secret, JoinDTO joinDTO) {
         String id = getId(REGISTRY_MSP, number);
         String response = this.registryCAConnector.register(id, secret, HFCAClient.HFCA_TYPE_CLIENT, this.registrar);
         if (response == null) {
@@ -169,10 +170,10 @@ public class FabricService {
         }
 
         Enrollment e = this.registryCAConnector.enroll(id, secret);
-        this.saveRegister(REGISTRY_MSP, id, number, secret, e);
+        return this.saveRegister(REGISTRY_MSP, id, number, secret, e, joinDTO);
     }
 
-    private void saveRegister(String msp, String id, String number, String secret, Enrollment e) {
+    private UserAccount saveRegister(String msp, String id, String number, String secret, Enrollment e, JoinDTO joinDTO) {
         CAEnrollment caEnrollment = CAEnrollment.of(e);
 
         Client client = Client.builder()
@@ -183,7 +184,13 @@ public class FabricService {
 
         String enrollment = client.getEnrollment().serialize(objectMapper);
         String encodedSecret = passwordEncoder.encode(secret);
-        this.userAccountRepository.save(UserAccount.of(client, number, encodedSecret, enrollment));
+
+        UserAccount userAccount = UserAccount.of(client, number, encodedSecret, enrollment);
+        userAccount.setUserName(joinDTO.username());
+        userAccount.setPhoneNumber(joinDTO.phoneNumber());
+        userAccount.setEmail(joinDTO.email());
+
+        return this.userAccountRepository.save(userAccount);
     }
 
     private void initialize() {

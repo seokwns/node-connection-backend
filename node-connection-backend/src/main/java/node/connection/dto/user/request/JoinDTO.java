@@ -1,13 +1,9 @@
 package node.connection.dto.user.request;
 
-import lombok.Getter;
-import lombok.Setter;
+public record JoinDTO (
 
-@Setter
-@Getter
-public class JoinDTO {
-
-    private String username;
-    private String password;
-    private String phonenum;
-}
+    String username,
+    String phoneNumber,
+    String email,
+    String courtCode
+) {}
