@@ -20,6 +20,7 @@ public enum ExceptionStatus {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "1009", "존재하지 않는 유저입니다."),
     KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "1010", "키를 찾을 수 없습니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "1011", "비밀번호가 일치하지 않습니다."),
+    INVALID_MSP_ID(HttpStatus.BAD_REQUEST, "1012", "잘못된 MSP ID 입니다."),
 
     INDY_INITIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2000", "Indy 초기화 중 에러가 발생했습니다."),
     WALLET_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "2001", "지갑 생성 중 에러가 발생했습니다."),

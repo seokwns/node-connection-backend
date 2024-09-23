@@ -13,6 +13,12 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity(name = "user_account_tb")
+@Table(
+        name = "user_account_tb",
+        uniqueConstraints = {
+            @UniqueConstraint(columnNames = {"mpsId", "number"})
+        }
+)
 @Getter
 @NoArgsConstructor
 public class UserAccount {
@@ -22,7 +28,7 @@ public class UserAccount {
     @Column
     private String mspId;
 
-    @Column(unique = true)
+    @Column
     private String number;
 
     @Column

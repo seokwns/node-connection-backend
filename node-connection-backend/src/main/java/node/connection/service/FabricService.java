@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -129,14 +130,28 @@ public class FabricService {
     }
 
     public void register(CustomUserDetails userDetails, JoinDTO joinDTO) {
+        UserAccount userAccount = userDetails.getUserAccount();
+        String fabricId = userAccount.getFabricId();
         String name = userDetails.getUsername();
+        String mspId = userDetails.getUserAccount().getMspId();
         String number = name.split(ID_DELIMITER)[1];
         String password = userDetails.getPassword();
 
-        registerToViewerMSP(number, password, joinDTO);
+        Enrollment enrollment;
+        if (Objects.equals(mspId, VIEWER_MSP)) {
+            enrollment = this.registerToViewerMSP(number, password);
+        }
+        else if (Objects.equals(mspId, REGISTRY_MSP)) {
+            enrollment = this.registerToRegistryMSP(number, password);
+        }
+        else {
+            throw new BadRequestException(ExceptionStatus.INVALID_MSP_ID);
+        }
+
+        this.saveRegister(mspId, fabricId, number, password, enrollment, joinDTO);
     }
 
-    public void registerToViewerMSP(String phoneNumber, String secret, JoinDTO joinDTO) {
+    public Enrollment registerToViewerMSP(String phoneNumber, String secret) {
         String id = getId(VIEWER_MSP, phoneNumber);
         String response = this.viewerCAConnector.register(id, secret, HFCAClient.HFCA_TYPE_USER, this.viewerRegistrar);
 
@@ -159,18 +174,17 @@ public class FabricService {
             enrollment = this.viewerCAConnector.enroll(id, secret);
         }
 
-        this.saveRegister(VIEWER_MSP, id, phoneNumber, secret, enrollment, joinDTO);
+        return enrollment;
     }
 
-    public UserAccount registerToRegistryMSP(String number, String secret, JoinDTO joinDTO) {
+    public Enrollment registerToRegistryMSP(String number, String secret) {
         String id = getId(REGISTRY_MSP, number);
         String response = this.registryCAConnector.register(id, secret, HFCAClient.HFCA_TYPE_CLIENT, this.registrar);
         if (response == null) {
             throw new BadRequestException(ExceptionStatus.ALREADY_CA_REGISTERED);
         }
 
-        Enrollment e = this.registryCAConnector.enroll(id, secret);
-        return this.saveRegister(REGISTRY_MSP, id, number, secret, e, joinDTO);
+        return this.registryCAConnector.enroll(id, secret);
     }
 
     private UserAccount saveRegister(String msp, String id, String number, String secret, Enrollment e, JoinDTO joinDTO) {

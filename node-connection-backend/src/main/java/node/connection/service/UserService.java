@@ -73,8 +73,9 @@ public class UserService {
 
     public void login(CustomUserDetails userDetails) {
         UserAccount userAccount = userDetails.getUserAccount();
-        String id = FabricService.getId(userAccount.getMspId(), userAccount.getNumber());
+        String id = userAccount.getFabricId();
 
+        log.debug("id: {}", id);
         this.userAccountRepository.findByFabricId(id)
                 .orElseThrow(() -> new BadRequestException(ExceptionStatus.USER_NOT_FOUND));
 

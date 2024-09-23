@@ -97,7 +97,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private void setAuthentication(String mspId, String number, String secret, Role role) {
         String id = FabricService.getId(mspId, number);
-        UserAccount userAccount = UserAccount.builder().fabricId(id).mspId(mspId).secret(secret).role(role).build();
+        UserAccount userAccount = UserAccount.builder().fabricId(id).mspId(mspId).number(number).secret(secret).role(role).build();
         CustomUserDetails userDetails = new CustomUserDetails(userAccount);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
