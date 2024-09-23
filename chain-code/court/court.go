@@ -334,10 +334,6 @@ func (s *SmartContract) AddRequest(ctx contractapi.TransactionContextInterface, 
 		return err
 	}
 
-	if court.Owner != clientID && !contains(court.Members, clientID) {
-		return errors.New("only the owner or members can add requests")
-	}
-
 	if request.ID == "" {
 		return errors.New("request ID is required")
 	}
@@ -652,6 +648,41 @@ func (s *SmartContract) GetRequestsByRequestorId(ctx contractapi.TransactionCont
 
 	if len(requests) == 0 {
 		return nil, fmt.Errorf("no requests found for requester ID %s", requestorID)
+	}
+
+	return requests, nil
+}
+
+func (s *SmartContract) GetRequestsByDocumentId(ctx contractapi.TransactionContextInterface, documentID string) ([]CourtRequest, error) {
+	globalIndex, err := s.loadGlobalIndex(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load global index: %v", err)
+	}
+
+	requestIDs, exists := globalIndex.RequestsByDocumentID[documentID]
+	if !exists || len(requestIDs) == 0 {
+		return []CourtRequest{}, nil
+	}
+
+	var requests []CourtRequest
+
+	for _, requestID := range requestIDs {
+		courtID, exists := globalIndex.CourtByRequestID[requestID]
+		if !exists {
+			continue
+		}
+
+		court, err := s.GetCourtByID(ctx, courtID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get court by ID %s: %v", courtID, err)
+		}
+
+		request, exists := court.RequestsByID[requestID]
+		if !exists {
+			continue
+		}
+
+		requests = append(requests, *request)
 	}
 
 	return requests, nil
