@@ -1,18 +1,10 @@
 package node.connection._core.utils;
 
-import org.springframework.beans.factory.annotation.Value;
-
-import java.security.SecureRandom;
+import java.time.Instant;
 
 public class Hash {
 
-    @Value("${security.jwe.secret}")
-    private static String CHARACTERS;
-
-    private static final SecureRandom random = new SecureRandom();
-
     public static final int DEFAULT_LENGTH = 8;
-
 
     public static String generate() {
         return generate(DEFAULT_LENGTH);
@@ -20,12 +12,24 @@ public class Hash {
 
     public static String generate(int length) {
         StringBuilder builder = new StringBuilder(length);
+        long currentTimeMillis = Instant.now().toEpochMilli();
 
         for (int i = 0; i < length; i++) {
-            int index = random.nextInt(CHARACTERS.length());
-            builder.append(CHARACTERS.charAt(index));
+            int randomCharIndex = (int) (currentTimeMillis % 62);
+            builder.append(getCharForIndex(randomCharIndex));
+            currentTimeMillis /= 62;
         }
 
         return builder.toString();
+    }
+
+    private static char getCharForIndex(int index) {
+        if (index < 10) {
+            return (char) ('0' + index);
+        } else if (index < 36) {
+            return (char) ('A' + (index - 10));
+        } else {
+            return (char) ('a' + (index - 36));
+        }
     }
 }
