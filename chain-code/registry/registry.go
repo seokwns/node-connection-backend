@@ -118,7 +118,7 @@ func (s *SmartContract) GetRegistryDocumentByID(ctx contractapi.TransactionConte
 }
 
 func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.TransactionContextInterface, locationNumber string) ([]*RegistryDocument, error) {
-	queryString := fmt.Sprintf(`{"selector":{"titleSection.buildingDescription.locationNumber":"%s"}}`, locationNumber)
+	queryString := fmt.Sprintf(`{"selector":{"titleSection":{"buildingDescription":{"$elemMatch":{"locationNumber":"%s"}}}}}`, locationNumber)
 	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %v", err)
@@ -139,10 +139,6 @@ func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.Tran
 		}
 
 		documents = append(documents, &document)
-	}
-
-	if len(documents) == 0 {
-		return nil, fmt.Errorf("no documents found for location number: %s", locationNumber)
 	}
 
 	return documents, nil
