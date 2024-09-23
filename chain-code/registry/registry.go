@@ -117,6 +117,21 @@ func (s *SmartContract) GetRegistryDocumentByID(ctx contractapi.TransactionConte
 	return &document, nil
 }
 
+func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.TransactionContextInterface, locationNumber string) (*RegistryDocument, error) {
+	queryString := fmt.Sprintf(`{"selector":{"titleSection.buildingDescription.locationNumber":"%s"}}`, locationNumber)
+	queryResults, err := getQueryResultForQueryString(ctx, queryString)
+	if err != nil {
+		return nil, err
+	}
+
+	var document RegistryDocument
+	if err := json.Unmarshal(queryResults, &document); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal document JSON: %v", err)
+	}
+
+	return &document, nil
+}
+
 func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingDescription) error {
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
@@ -184,6 +199,15 @@ func (s *SmartContract) updateRegistryDocument(ctx contractapi.TransactionContex
 	}
 
 	return ctx.GetStub().PutState(document.ID, documentJSON)
+}
+
+func (s *SmartContract) getClientID(ctx contractapi.TransactionContextInterface) (string, error) {
+	certBase64, err := ctx.GetClientIdentity().GetX509Certificate()
+	if err != nil {
+		return "", fmt.Errorf("failed to get client certificate: %v", err)
+	}
+
+	return certBase64.Subject.CommonName, nil
 }
 
 func main() {
