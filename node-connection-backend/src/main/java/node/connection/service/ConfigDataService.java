@@ -3,6 +3,8 @@ package node.connection.service;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.server.ServerException;
+import node.connection._core.security.CustomUserDetails;
+import node.connection._core.utils.AccessControl;
 import node.connection.entity.ConfigData;
 import node.connection.hyperledger.FabricConfig;
 import node.connection.repository.ConfigDataRepository;
@@ -25,6 +27,9 @@ public class ConfigDataService {
 
     @Autowired
     private FabricConfig fabricConfig;
+
+    @Autowired
+    private AccessControl accessControl;
 
 
     // key로 value 조회
@@ -55,12 +60,14 @@ public class ConfigDataService {
                 .orElseThrow(() -> new ServerException(ExceptionStatus.KEY_NOT_FOUND));
     }
 
-    public void updateCourtChainCodeVersion(String version) {
+    public void updateCourtChainCodeVersion(CustomUserDetails userDetails, String version) {
+        this.accessControl.hasRootRole(userDetails);
         this.updateValueByKey(COURT_CHAIN_CODE, version);
         this.fabricConfig.setCourtChainCodeVersion(version);
     }
 
-    public void updateRegistryChainCodeVersion(String version) {
+    public void updateRegistryChainCodeVersion(CustomUserDetails userDetails, String version) {
+        this.accessControl.hasRootRole(userDetails);
         this.updateValueByKey(REGISTRY_CHAIN_CODE, version);
         this.fabricConfig.setRegistryChainCodeVersion(version);
     }
