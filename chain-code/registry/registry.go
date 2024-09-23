@@ -117,19 +117,35 @@ func (s *SmartContract) GetRegistryDocumentByID(ctx contractapi.TransactionConte
 	return &document, nil
 }
 
-func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.TransactionContextInterface, locationNumber string) (*RegistryDocument, error) {
+func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.TransactionContextInterface, locationNumber string) ([]*RegistryDocument, error) {
 	queryString := fmt.Sprintf(`{"selector":{"titleSection.buildingDescription.locationNumber":"%s"}}`, locationNumber)
-	queryResults, err := getQueryResultForQueryString(ctx, queryString)
+	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute query: %v", err)
+	}
+	defer resultsIterator.Close()
+
+	var documents []*RegistryDocument
+
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve next item: %v", err)
+		}
+
+		var document RegistryDocument
+		if err := json.Unmarshal(queryResponse.Value, &document); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal document JSON: %v", err)
+		}
+
+		documents = append(documents, &document)
 	}
 
-	var document RegistryDocument
-	if err := json.Unmarshal(queryResults, &document); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal document JSON: %v", err)
+	if len(documents) == 0 {
+		return nil, fmt.Errorf("no documents found for location number: %s", locationNumber)
 	}
 
-	return &document, nil
+	return documents, nil
 }
 
 func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingDescription) error {
