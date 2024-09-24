@@ -40,21 +40,17 @@ public class SecurityConfig {
 
     private final ExceptionResponseWriter responseWriter;
 
-    private final FabricService fabricService;
-
     private final PasswordEncoder passwordEncoder;
 
 
     public SecurityConfig(@Autowired JweDecoder jweDecoder,
                           @Autowired UserAccountRepository userAccountRepository,
                           @Autowired ExceptionResponseWriter responseWriter,
-                          @Autowired FabricService fabricService,
                           @Autowired PasswordEncoder passwordEncoder
     ) {
         this.jweDecoder = jweDecoder;
         this.userAccountRepository = userAccountRepository;
         this.responseWriter = responseWriter;
-        this.fabricService = fabricService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -93,7 +89,7 @@ public class SecurityConfig {
         http.httpBasic(HttpBasicConfigurer::disable);
 
         http.addFilterBefore(
-                new JwtAuthenticationFilter(authenticationManager(http.getSharedObject(AuthenticationConfiguration.class)), jweDecoder, userAccountRepository, fabricService, passwordEncoder),
+                new JwtAuthenticationFilter(authenticationManager(http.getSharedObject(AuthenticationConfiguration.class)), jweDecoder, userAccountRepository, passwordEncoder),
                 UsernamePasswordAuthenticationFilter.class
         );
 

@@ -11,9 +11,12 @@ import node.connection._core.utils.Mapper;
 import node.connection.dto.court.response.FabricCourtRequest;
 import node.connection.dto.user.request.JoinDTO;
 import node.connection.entity.UserAccount;
+import node.connection.entity.constant.Role;
 import node.connection.hyperledger.FabricConfig;
 import node.connection.hyperledger.fabric.FabricProposalResponse;
+import node.connection.hyperledger.fabric.ca.CAEnrollment;
 import node.connection.repository.UserAccountRepository;
+import org.hyperledger.fabric.sdk.Enrollment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +34,8 @@ public class UserService {
 
     private final UserAccountRepository userAccountRepository;
 
+    private final CourtRepository courtRepository;
+
     private final AccessControl accessControl;
 
 
@@ -39,12 +44,14 @@ public class UserService {
             @Autowired FabricConfig fabricConfig,
             @Autowired Mapper objectMapper,
             @Autowired UserAccountRepository userAccountRepository,
+            @Autowired CourtRepository courtRepository,
             @Autowired AccessControl accessControl
     ) {
         this.fabricService = fabricService;
         this.fabricConfig = fabricConfig;
         this.objectMapper = objectMapper;
         this.userAccountRepository = userAccountRepository;
+        this.courtRepository = courtRepository;
         this.accessControl = accessControl;
     }
 
@@ -68,7 +75,37 @@ public class UserService {
 
     public void register(CustomUserDetails userDetails, JoinDTO joinDTO) {
         this.accessControl.hasAnonymousRole(userDetails);
-        this.fabricService.register(userDetails, joinDTO);
+
+        UserAccount userAccount = userDetails.getUserAccount();
+        String id = userAccount.getFabricId();
+        String msp = userAccount.getMspId();
+
+        if (this.userAccountRepository.existsByFabricId(id)) {
+            throw new BadRequestException(ExceptionStatus.ALREADY_REGISTERED);
+        }
+
+        if (joinDTO.courtCode() != null) {
+            this.courtRepository.findByRegisterCode(joinDTO.courtCode())
+                    .orElseThrow(() -> new BadRequestException(ExceptionStatus.INVALID_COURT_CODE));
+        }
+
+        Enrollment e = this.fabricService.register(userDetails, joinDTO);
+        CAEnrollment caEnrollment = CAEnrollment.of(e);
+        String enrollment = caEnrollment.serialize(objectMapper);
+        userAccount.setEnrollment(enrollment);
+
+        if (msp.equals(FabricService.VIEWER_MSP)) {
+            userAccount.setRole(Role.VIEWER);
+        }
+        else if (msp.equals(FabricService.REGISTRY_MSP)) {
+            userAccount.setRole(Role.REGISTRY);
+        }
+
+        userAccount.setUserName(joinDTO.username());
+        userAccount.setPhoneNumber(joinDTO.phoneNumber());
+        userAccount.setEmail(joinDTO.email());
+
+        this.userAccountRepository.save(userAccount);
     }
 
     public void login(CustomUserDetails userDetails) {

@@ -28,7 +28,7 @@ public class Court {
     @Column
     private String faxNumber;
 
-    @Column
+    @Column(unique = true)
     private String registerCode;
 
     @Column(nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")

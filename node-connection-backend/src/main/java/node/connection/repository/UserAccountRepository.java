@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface UserAccountRepository extends JpaRepository<UserAccount, String> {
     Optional<UserAccount> findByFabricId(String fabricId);
 
+    boolean existsByFabricId(String fabricId);
+
     Optional<UserAccount> findByNumber(String number);
 }

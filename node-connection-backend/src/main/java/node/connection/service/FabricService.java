@@ -129,7 +129,7 @@ public class FabricService {
         return fabricConnector;
     }
 
-    public void register(CustomUserDetails userDetails, JoinDTO joinDTO) {
+    public Enrollment register(CustomUserDetails userDetails, JoinDTO joinDTO) {
         UserAccount userAccount = userDetails.getUserAccount();
         String fabricId = userAccount.getFabricId();
         String name = userDetails.getUsername();
@@ -148,7 +148,9 @@ public class FabricService {
             throw new BadRequestException(ExceptionStatus.INVALID_MSP_ID);
         }
 
-        this.saveRegister(mspId, fabricId, number, password, enrollment, joinDTO);
+        return enrollment;
+
+//        this.saveRegister(mspId, fabricId, number, password, enrollment, joinDTO);
     }
 
     public Enrollment registerToViewerMSP(String phoneNumber, String secret) {

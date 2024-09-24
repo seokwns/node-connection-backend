@@ -145,4 +145,12 @@ public class UserAccount {
     public void setCourt(Court court) {
         this.court = court;
     }
+
+    public void setEnrollment(String enrollment) {
+        this.enrollment = enrollment;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 }

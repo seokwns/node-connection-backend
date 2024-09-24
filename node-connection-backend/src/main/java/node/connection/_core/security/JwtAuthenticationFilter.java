@@ -30,21 +30,17 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private final UserAccountRepository userAccountRepository;
 
-    private final FabricService fabricService;
-
     private final PasswordEncoder passwordEncoder;
 
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
                                    JweDecoder jweDecoder,
                                    UserAccountRepository userAccountRepository,
-                                   FabricService fabricService,
                                    PasswordEncoder passwordEncoder
     ) {
         super(authenticationManager);
         this.jweDecoder = jweDecoder;
         this.userAccountRepository = userAccountRepository;
-        this.fabricService = fabricService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -78,6 +74,10 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             UserAccount userAccount = this.userAccountRepository.findByFabricId(fabricId)
                     .orElseThrow(() -> new NotFoundException(ExceptionStatus.USER_NOT_FOUND));
 
+            if (!this.passwordEncoder.matches(secret, userAccount.getSecret())) {
+                throw new BadRequestException(ExceptionStatus.INVALID_PASSWORD);
+            }
+
             setAuthentication(userAccount);
         }
 
@@ -97,7 +97,8 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private void setAuthentication(String mspId, String number, String secret, Role role) {
         String id = FabricService.getId(mspId, number);
-        UserAccount userAccount = UserAccount.builder().fabricId(id).mspId(mspId).number(number).secret(secret).role(role).build();
+        String encodedSecret = this.passwordEncoder.encode(secret);
+        UserAccount userAccount = UserAccount.builder().fabricId(id).mspId(mspId).number(number).secret(encodedSecret).role(role).build();
         CustomUserDetails userDetails = new CustomUserDetails(userAccount);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
