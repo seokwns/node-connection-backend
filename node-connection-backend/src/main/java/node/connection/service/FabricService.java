@@ -129,7 +129,7 @@ public class FabricService {
         return fabricConnector;
     }
 
-    public Enrollment register(CustomUserDetails userDetails, JoinDTO joinDTO) {
+    public Enrollment register(CustomUserDetails userDetails) {
         UserAccount userAccount = userDetails.getUserAccount();
         String fabricId = userAccount.getFabricId();
         String name = userDetails.getUsername();
@@ -149,8 +149,6 @@ public class FabricService {
         }
 
         return enrollment;
-
-//        this.saveRegister(mspId, fabricId, number, password, enrollment, joinDTO);
     }
 
     public Enrollment registerToViewerMSP(String phoneNumber, String secret) {
@@ -187,26 +185,6 @@ public class FabricService {
         }
 
         return this.registryCAConnector.enroll(id, secret);
-    }
-
-    private UserAccount saveRegister(String msp, String id, String number, String secret, Enrollment e, JoinDTO joinDTO) {
-        CAEnrollment caEnrollment = CAEnrollment.of(e);
-
-        Client client = Client.builder()
-                .name(id)
-                .mspId(msp)
-                .enrollment(caEnrollment)
-                .build();
-
-        String enrollment = client.getEnrollment().serialize(objectMapper);
-        String encodedSecret = passwordEncoder.encode(secret);
-
-        UserAccount userAccount = UserAccount.of(client, number, encodedSecret, enrollment);
-        userAccount.setUserName(joinDTO.username());
-        userAccount.setPhoneNumber(joinDTO.phoneNumber());
-        userAccount.setEmail(joinDTO.email());
-
-        return this.userAccountRepository.save(userAccount);
     }
 
     private void initialize() {

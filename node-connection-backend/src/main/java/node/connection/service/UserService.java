@@ -19,7 +19,9 @@ import node.connection.repository.CourtRepository;
 import node.connection.repository.UserAccountRepository;
 import org.hyperledger.fabric.sdk.Enrollment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -39,6 +41,8 @@ public class UserService {
 
     private final AccessControl accessControl;
 
+    private final PasswordEncoder passwordEncoder;
+
 
     public UserService(
             @Autowired FabricService fabricService,
@@ -46,7 +50,8 @@ public class UserService {
             @Autowired Mapper objectMapper,
             @Autowired UserAccountRepository userAccountRepository,
             @Autowired CourtRepository courtRepository,
-            @Autowired AccessControl accessControl
+            @Autowired AccessControl accessControl,
+            @Autowired PasswordEncoder passwordEncoder
     ) {
         this.fabricService = fabricService;
         this.fabricConfig = fabricConfig;
@@ -54,6 +59,7 @@ public class UserService {
         this.userAccountRepository = userAccountRepository;
         this.courtRepository = courtRepository;
         this.accessControl = accessControl;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<FabricCourtRequest> findRequestsByUser(CustomUserDetails userDetails) {
@@ -74,6 +80,7 @@ public class UserService {
         return this.objectMapper.readValue(response.getPayload(), new TypeReference<List<FabricCourtRequest>>() {});
     }
 
+    @Transactional
     public void register(CustomUserDetails userDetails, JoinDTO joinDTO) {
         this.accessControl.hasAnonymousRole(userDetails);
 
@@ -90,7 +97,7 @@ public class UserService {
                     .orElseThrow(() -> new BadRequestException(ExceptionStatus.INVALID_COURT_CODE));
         }
 
-        Enrollment e = this.fabricService.register(userDetails, joinDTO);
+        Enrollment e = this.fabricService.register(userDetails);
         CAEnrollment caEnrollment = CAEnrollment.of(e);
         String enrollment = caEnrollment.serialize(objectMapper);
         userAccount.setEnrollment(enrollment);
@@ -102,6 +109,8 @@ public class UserService {
             userAccount.setRole(Role.REGISTRY);
         }
 
+        String encodedSecret = this.passwordEncoder.encode(userAccount.getSecret());
+        userAccount.setSecret(encodedSecret);
         userAccount.setUserName(joinDTO.username());
         userAccount.setPhoneNumber(joinDTO.phoneNumber());
         userAccount.setEmail(joinDTO.email());
@@ -113,9 +122,12 @@ public class UserService {
         UserAccount userAccount = userDetails.getUserAccount();
         String id = userAccount.getFabricId();
 
-        log.debug("id: {}", id);
-        this.userAccountRepository.findByFabricId(id)
+        UserAccount _userAccount = this.userAccountRepository.findByFabricId(id)
                 .orElseThrow(() -> new BadRequestException(ExceptionStatus.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(userAccount.getSecret(), _userAccount.getSecret())) {
+            throw new BadRequestException(ExceptionStatus.INVALID_PASSWORD);
+        }
 
         this.fabricService.getConnectorById(id);
     }

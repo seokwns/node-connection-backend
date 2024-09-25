@@ -153,4 +153,8 @@ public class UserAccount {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
 }
