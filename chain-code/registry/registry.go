@@ -91,6 +91,10 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 
 // 등기부등본 생성
 func (s *SmartContract) CreateRegistryDocument(ctx contractapi.TransactionContextInterface, id string, document RegistryDocument) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+	
 	documentJSON, err := json.Marshal(document)
 	if err != nil {
 		return fmt.Errorf("failed to marshal document: %v", err)
@@ -145,6 +149,10 @@ func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.Tran
 }
 
 func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingDescription) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
@@ -155,6 +163,10 @@ func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.Tra
 }
 
 func (s *SmartContract) AddLandDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, landDesc LandDescription) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
@@ -165,6 +177,10 @@ func (s *SmartContract) AddLandDescriptionToTitleSection(ctx contractapi.Transac
 }
 
 func (s *SmartContract) AddBuildingDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingPartDescription) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
@@ -175,6 +191,10 @@ func (s *SmartContract) AddBuildingDescriptionToExclusivePart(ctx contractapi.Tr
 }
 
 func (s *SmartContract) AddLandRightDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, landRightDesc LandRightDescription) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
@@ -185,6 +205,10 @@ func (s *SmartContract) AddLandRightDescriptionToExclusivePart(ctx contractapi.T
 }
 
 func (s *SmartContract) AddFirstSectionEntry(ctx contractapi.TransactionContextInterface, id string, firstSectionEntry FirstSection) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
@@ -195,6 +219,10 @@ func (s *SmartContract) AddFirstSectionEntry(ctx contractapi.TransactionContextI
 }
 
 func (s *SmartContract) AddSecondSectionEntry(ctx contractapi.TransactionContextInterface, id string, secondSectionEntry SecondSection) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
@@ -205,6 +233,10 @@ func (s *SmartContract) AddSecondSectionEntry(ctx contractapi.TransactionContext
 }
 
 func (s *SmartContract) updateRegistryDocument(ctx contractapi.TransactionContextInterface, document *RegistryDocument) error {
+	if err := s.verifyClientMSP(ctx); err != nil {
+		return err
+	}
+
 	documentJSON, err := json.Marshal(document)
 	if err != nil {
 		return err
@@ -213,14 +245,19 @@ func (s *SmartContract) updateRegistryDocument(ctx contractapi.TransactionContex
 	return ctx.GetStub().PutState(document.ID, documentJSON)
 }
 
-func (s *SmartContract) getClientID(ctx contractapi.TransactionContextInterface) (string, error) {
-	certBase64, err := ctx.GetClientIdentity().GetX509Certificate()
+func (s *SmartContract) verifyClientMSP(ctx contractapi.TransactionContextInterface) error {
+	clientMSPID, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
-		return "", fmt.Errorf("failed to get client certificate: %v", err)
+			return fmt.Errorf("failed to get client's MSP ID: %v", err)
 	}
 
-	return certBase64.Subject.CommonName, nil
+	if clientMSPID != "RegistryMSP" {
+			return fmt.Errorf("client is not authorized to perform this action. MSP: %s", clientMSPID)
+	}
+
+	return nil
 }
+
 
 func main() {
 	chaincode, err := contractapi.NewChaincode(&SmartContract{})
