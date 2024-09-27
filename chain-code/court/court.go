@@ -488,7 +488,7 @@ func (s *SmartContract) FinalizeRequest(ctx contractapi.TransactionContextInterf
 	return nil
 }
 
-func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterface, requestID string, targetCourtID string) error {
+func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterface, courtId string, requestID string, targetCourtID string) error {
 	clientID, err := s.getClientID(ctx)
 	if err != nil {
 		return err
@@ -497,6 +497,10 @@ func (s *SmartContract) ForwardRequest(ctx contractapi.TransactionContextInterfa
 	currentCourt, err := s.GetCourtByID(ctx, s.GlobalIndex.CourtByRequestID[requestID])
 	if err != nil {
 		return fmt.Errorf("failed to get current court: %v", err)
+	}
+
+	if currentCourt.ID != courtId {
+		return errors.New("request does not belong to the current court")
 	}
 
 	if currentCourt.Owner != clientID && !contains(currentCourt.Members, clientID) {
@@ -612,6 +616,20 @@ func (s *SmartContract) GetAllFinalizedRequests(ctx contractapi.TransactionConte
 	}
 
 	return finalizedRequests, nil
+}
+
+func (s *SmartContract) GetRequestByID(ctx contractapi.TransactionContextInterface, courtID string, requestID string) (*CourtRequest, error) {
+	court, err := s.GetCourtByID(ctx, courtID)
+	if err != nil {
+		return nil, err
+	}
+
+	request, exists := court.RequestsByID[requestID]
+	if !exists {
+		return nil, fmt.Errorf("request with ID %s does not exist in court %s", requestID, courtID)
+	}
+
+	return request, nil
 }
 
 func (s *SmartContract) GetRequestsByRequestorId(ctx contractapi.TransactionContextInterface, requestorID string) ([]CourtRequest, error) {
