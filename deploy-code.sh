@@ -41,6 +41,7 @@ while [[ "$#" -gt 0 ]]; do
         -ccc|--collections-config)
             COLLECTIONS_CONFIG="$2"
             shift 2
+            ;;
         *)
             echo -e "${RED}Unknown parameter passed: $1${NC}"
             exit 1
