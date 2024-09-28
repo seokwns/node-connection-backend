@@ -53,6 +53,10 @@ if [[ "$CHAINCODE_DIR" != /* ]]; then
     CHAINCODE_DIR="$(pwd)/$CHAINCODE_DIR"
 fi
 
+if [[ "$COLLECTIONS_CONFIG" != /* ]]; then
+    COLLECTIONS_CONFIG="$(pwd)/chain-code/$CHAINCODE_NAME/$COLLECTIONS_CONFIG"
+fi
+
 echo -e "${BLUE}Parsed values:${NC}"
 echo -e "${BLUE}CHANNEL_NAME: $CHANNEL_NAME${NC}"
 echo -e "${BLUE}CHAINCODE_NAME: $CHAINCODE_NAME${NC}"
