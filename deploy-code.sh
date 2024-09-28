@@ -38,7 +38,7 @@ while [[ "$#" -gt 0 ]]; do
             CHAINCODE_VERSION="$2"
             shift 2
             ;;
-        -ccc|--collections-config)
+        -cccg|--collections-config)
             COLLECTIONS_CONFIG="$2"
             shift 2
             ;;
@@ -71,4 +71,4 @@ if [ ! -x "./network/node-connection-network/network.sh" ]; then
     exit 1
 fi
 
-./network/node-connection-network/network.sh deployCC -c "$CHANNEL_NAME" -ccn "$CHAINCODE_NAME" -ccp "$CHAINCODE_DIR" -ccl "$LANGUAGE" -ccv "$CHAINCODE_VERSION" --collections-config "$COLLECTIONS_CONFIG"
+./network/node-connection-network/network.sh deployCC -c "$CHANNEL_NAME" -ccn "$CHAINCODE_NAME" -ccp "$CHAINCODE_DIR" -ccl "$LANGUAGE" -ccv "$CHAINCODE_VERSION" -cccg "$COLLECTIONS_CONFIG"
