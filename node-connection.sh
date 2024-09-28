@@ -262,7 +262,7 @@ function export_config() {
     # Fabric Channel Information
     echo '' >> hyperledger.config.sh
     echo '# Fabric Channel Information' >> hyperledger.config.sh
-    echo 'CHANNEL_NAME=nodeconnectionchannel' >> hyperledger.config.sh
+    echo 'CHANNEL_NAME=node-connection-default-channel' >> hyperledger.config.sh
     echo 'export CHANNEL_NAME' >> hyperledger.config.sh
 
     echo '' >> hyperledger.config.sh
@@ -392,7 +392,7 @@ function start_application() {
     config_org_env
 
     echo -e "${YELLOW}Creating default channel...${NC}"
-    ./network/node-connection-network/network.sh createChannel -c nodeconnectionchannel
+    ./network/node-connection-network/network.sh createChannel -c node-connection-default-channel
 
     echo -e "${YELLOW}Exporting Hyperledger network config...${NC}"
     export_config

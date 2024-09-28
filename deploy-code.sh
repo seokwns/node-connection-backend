@@ -6,7 +6,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-DEFAULT_CHANNEL_NAME="nodeconnectionchannel"
+DEFAULT_CHANNEL_NAME="node-connection-default-channel"
 DEFAULT_LANGUAGE="go"
 
 CHANNEL_NAME="$DEFAULT_CHANNEL_NAME"
