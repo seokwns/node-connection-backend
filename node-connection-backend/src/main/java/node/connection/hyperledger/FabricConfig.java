@@ -16,6 +16,9 @@ public class FabricConfig {
 
     private String courtChainCodeVersion = "1.0.2";
 
+    @Value("${hpyerledger.fabric.pem}")
+    private String pemFilePath;
+
     @Value("${hyperledger.fabric.ca.registry.name}")
     private String registryCaName;
 
