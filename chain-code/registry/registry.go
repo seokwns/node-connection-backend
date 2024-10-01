@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -105,6 +106,7 @@ func (s *SmartContract) CreateRegistryDocument(ctx contractapi.TransactionContex
 	}
 
 	id := generateDocumentID(string(documentJSON))
+	document.ID = id
 
 	return ctx.GetStub().PutState(id, documentJSON)
 }

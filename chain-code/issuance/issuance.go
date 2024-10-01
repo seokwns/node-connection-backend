@@ -96,12 +96,12 @@ type IssuerData struct {
 }
 
 type IssuanceData struct {
-	TxId                    string			`json:"txId"`                   // 트랜잭션 ID
-	IssuerName              string    	`json:"issuerName"`             // 발급자 이름
-	RegistryDocumentHash 		string		  `json:"registryDocumentHash"`  	// 등기부등본 정보 해시값
-  IssuerDataHash 					string  		`json:"issuerDataHash"`  				// 요청자 정보 해시값
-	IssuanceDate						string			`json:"issuanceDate"`						// 발급일
-	ExpirationDate					string			`json:"expirationDate"`					// 만료일
+	TxId                    string						`json:"txId"`                   // 트랜잭션 ID
+	IssuerName              string    				`json:"issuerName"`             // 발급자 이름
+  IssuerDataHash 					string  					`json:"issuerDataHash"`  				// 요청자 정보 해시값
+	RegistryDocument			 	RegistryDocument	`json:"registryDocument"`  			// 등기부등본 정보 해시값
+	IssuanceDate						string						`json:"issuanceDate"`						// 발급일
+	ExpirationDate					string						`json:"expirationDate"`					// 만료일
 }
 
 const HASH_SALT = "qwer1234"
@@ -128,22 +128,16 @@ func (s *SmartContract) issuance(ctx contractapi.TransactionContextInterface, is
 	issuerHash := encodeIssuerData(data)
 	err := ctx.GetStub().PutPrivateData("IssuerInfoCollection", issuerHash, data)
 
-	// 2. 등기부등본 정보 해싱
-	// 2-1. 등기부등본 정보 조회
-	registryDocument, err := ctx.GetStub().InvokeChaincode("registry", [][]byte{[]byte("GetRegistryDocumentByID"), []byte(registryDocumentID)}, "")
-	if err != nil {
-		return "", fmt.Errorf("failed to invoke chaincode: %v", err)
-	}
-	if registryDocument == nil {
-		return "", fmt.Errorf("the registry document %s does not exist", registryDocumentID)
+	// 2. 등기부등본 정보 조회
+	response := ctx.GetStub().InvokeChaincode("registry", [][]byte{[]byte("GetRegistryDocumentByID"), []byte(registryDocumentID)}, "")
+	if response.Status != 200 {
+		return "", fmt.Errorf("failed to invoke chaincode: %s", response.Message)
 	}
 
-	// 2-2. 등기부등본 정보 해싱
-	registryDocumentData, _ := json.Marshal(registryDocument)
-	registryDocumentHash := encodeRegistryDocument(registryDocumentData)
-	err = ctx.GetStub().PutState(registryDocumentHash, registryDocumentData)
+	var registryDocument RegistryDocument
+	err = json.Unmarshal(response.Payload, &registryDocument)
 	if err != nil {
-		return "", fmt.Errorf("Failed to put registry document state: %s", err)
+		return "", fmt.Errorf("Failed to unmarshal registry document: %s", err)
 	}
 
 	// 3. 발급 내역 저장
@@ -172,7 +166,7 @@ func (s *SmartContract) issuance(ctx contractapi.TransactionContextInterface, is
 	issuanceData := IssuanceData{
 		TxId: ctx.GetStub().GetTxID(),
 		IssuerName: issuerName,
-		RegistryDocumentHash: registryDocumentHash,
+		RegistryDocument: registryDocument,
 		IssuerDataHash: issuerHash,
 		IssuanceDate: issuanceDate,
 		ExpirationDate: expirationDate,
@@ -188,6 +182,12 @@ func (s *SmartContract) issuance(ctx contractapi.TransactionContextInterface, is
 	err = ctx.GetStub().PutState(issuanceHash, issuanceDataJSON)
 	if err != nil {
 		return "", fmt.Errorf("Failed to put state: %s", err)
+	}
+
+	// event 발생
+	err = ctx.GetStub().SetEvent("issuance", []byte(issuanceHash))
+	if err != nil {
+		return "", fmt.Errorf("Failed to set event: %s", err)
 	}
 
 	return issuanceHash, nil
@@ -211,7 +211,7 @@ func generateIssuanceHash(data []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (s *SmartContract) GetRegistryDocumentByIssuanceHash(ctx contractapi.TransactionContextInterface, issuanceHash string) (*RegistryDocument, error) {
+func (s *SmartContract) GetIssuanceDataByHash(ctx contractapi.TransactionContextInterface, issuanceHash string) (*IssuanceData, error) {
 	issuanceDataJSON, err := ctx.GetStub().GetState(issuanceHash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
@@ -241,21 +241,7 @@ func (s *SmartContract) GetRegistryDocumentByIssuanceHash(ctx contractapi.Transa
 		return nil, fmt.Errorf("the issuance data %s has expired", issuanceHash)
 	}
 
-	registryDocumentJSON, err := ctx.GetStub().GetState(issuanceData.RegistryDocumentHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from world state: %v", err)
-	}
-
-	if registryDocumentJSON == nil {
-		return nil, fmt.Errorf("the registry document %s does not exist", issuanceData.RegistryDocumentHash)
-	}
-
-	var registryDocument RegistryDocument
-	if err := json.Unmarshal(registryDocumentJSON, &registryDocument); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal registry document JSON: %v", err)
-	}
-
-	return &registryDocument, nil
+	return &issuanceData, nil
 }
 
 func (s *SmartContract) GetIssuerDataByIssuanceHash(ctx contractapi.TransactionContextInterface, issuanceHash string) (*IssuerData, error) {
