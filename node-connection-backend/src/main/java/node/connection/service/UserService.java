@@ -15,6 +15,7 @@ import node.connection.dto.user.response.IssuanceHistoryDto;
 import node.connection.entity.IssuanceHistory;
 import node.connection.entity.UserAccount;
 import node.connection.entity.constant.Role;
+import node.connection.entity.pk.IssuanceHistoryKey;
 import node.connection.hyperledger.FabricConfig;
 import node.connection.hyperledger.fabric.FabricConnector;
 import node.connection.hyperledger.fabric.FabricProposalResponse;
@@ -163,9 +164,14 @@ public class UserService {
 
         String issuanceHash = response.getPayload();
 
-        IssuanceHistory issuanceHistory = IssuanceHistory.builder()
-                .userAccount(userAccount)
+        IssuanceHistoryKey key = IssuanceHistoryKey.builder()
+                .fabricId(userAccount.getFabricId())
                 .issuanceHash(issuanceHash)
+                .build();
+
+        IssuanceHistory issuanceHistory = IssuanceHistory.builder()
+                .key(key)
+                .userAccount(userAccount)
                 .registryDocumentId(document.getId())
                 .address(locationNumber)
                 .expiredAt(LocalDateTime.now().plusDays(90))
@@ -181,7 +187,7 @@ public class UserService {
         List<IssuanceHistory> histories = this.issuanceHistoryRepository.findAllByUserAccount(userAccount);
         return histories.stream()
                 .map(history -> new IssuanceHistoryDto(
-                        history.getIssuanceHash(),
+                        history.getKey().getIssuanceHash(),
                         history.getAddress(),
                         history.getCreatedAt(),
                         history.getExpiredAt()
