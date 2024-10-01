@@ -110,6 +110,11 @@ func (s *SmartContract) CreateRegistryDocument(ctx contractapi.TransactionContex
 	id := generateDocumentID(string(documentJSON))
 	document.ID = id
 
+	documentJSON, err = json.Marshal(document)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal document: %v", err)
+	}
+
 	err = ctx.GetStub().PutState(id, documentJSON)
 	if err != nil {
 		return id, fmt.Errorf("failed to put document into world state: %v", err)
