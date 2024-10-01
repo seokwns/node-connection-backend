@@ -11,43 +11,34 @@ import org.springframework.stereotype.Component;
 public class AccessControl {
 
     public void hasAdminRole(CustomUserDetails userDetails) {
-        boolean granted = userDetails.getAuthorities()
-                .stream()
-                .anyMatch(authority -> hasRole(authority, Role.ADMIN));
-
+        boolean granted = this.isRoleGranted(userDetails, Role.ADMIN);
         if (!granted) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);
     }
 
     public void hasRootRole(CustomUserDetails userDetails) {
-        boolean granted = userDetails.getAuthorities()
-                .stream()
-                .anyMatch(authority -> hasRole(authority, Role.ROOT));
-
+        boolean granted = this.isRoleGranted(userDetails, Role.ROOT);
         if (!granted) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);
     }
 
     public void hasRegistryRole(CustomUserDetails userDetails) {
-        boolean granted = userDetails.getAuthorities()
-                .stream()
-                .anyMatch(authority -> hasRole(authority, Role.REGISTRY));
-
+        boolean granted = this.isRoleGranted(userDetails, Role.REGISTRY);
         if (!granted) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);
     }
 
     public void hasViewerRole(CustomUserDetails userDetails) {
-        boolean granted = userDetails.getAuthorities()
-                .stream()
-                .anyMatch(authority -> hasRole(authority, Role.VIEWER));
-
+        boolean granted = this.isRoleGranted(userDetails, Role.VIEWER);
         if (!granted) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);
     }
 
     public void hasAnonymousRole(CustomUserDetails userDetails) {
-        boolean granted = userDetails.getAuthorities()
-                .stream()
-                .anyMatch(authority -> hasRole(authority, Role.ANONYMOUS));
-
+        boolean granted = this.isRoleGranted(userDetails, Role.ANONYMOUS);
         if (!granted) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);
+    }
+
+    private boolean isRoleGranted(CustomUserDetails userDetails, Role role) {
+        return userDetails.getAuthorities()
+                .stream()
+                .anyMatch(authority -> hasRole(authority, role));
     }
 
     private boolean hasRole(GrantedAuthority authorities, Role role) {
