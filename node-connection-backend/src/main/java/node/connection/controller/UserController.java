@@ -2,7 +2,7 @@ package node.connection.controller;
 
 import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
-import node.connection.dto.court.response.FabricCourtRequest;
+import node.connection.dto.root.response.FabricCourtRequest;
 import node.connection.dto.user.request.JoinDTO;
 import node.connection.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +25,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/request")
-    public ResponseEntity<?> findRequestsByUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        List<FabricCourtRequest> requests = this.userService.findRequestsByUser(userDetails);
-        return ResponseEntity.ok().body(Response.success(requests));
-    }
-
     @PostMapping("/register")
     public ResponseEntity<?> register(@AuthenticationPrincipal CustomUserDetails userDetails,
                                       @RequestBody JoinDTO joinDTO
@@ -43,5 +37,12 @@ public class UserController {
     public ResponseEntity<?> login(@AuthenticationPrincipal CustomUserDetails userDetails) {
         this.userService.login(userDetails);
         return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @PostMapping("/issuance")
+    public ResponseEntity<?> issuance(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                      @RequestBody String documentId
+    ) {
+
     }
 }

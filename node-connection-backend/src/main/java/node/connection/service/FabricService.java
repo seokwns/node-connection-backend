@@ -7,7 +7,9 @@ import node.connection._core.exception.client.BadRequestException;
 import node.connection._core.exception.client.NotFoundException;
 import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
+import node.connection._core.utils.AccessControl;
 import node.connection._core.utils.Mapper;
+import node.connection.dto.root.request.FabricPeerAddRequest;
 import node.connection.dto.user.request.JoinDTO;
 import node.connection.entity.UserAccount;
 import node.connection.entity.constant.Role;
@@ -21,12 +23,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
 @Service
 @Slf4j
 public class FabricService {
+
+    private final AccessControl accessControl;
 
     private final FabricConfig fabricConfig;
 
@@ -46,10 +53,8 @@ public class FabricService {
 
     private final Mapper objectMapper;
 
-    @Getter
     private final PasswordEncoder passwordEncoder;
 
-    @Getter
     private final UserAccountRepository userAccountRepository;
 
     public final static String VIEWER_MSP = "ViewerMSP";
@@ -58,12 +63,13 @@ public class FabricService {
 
     public final static String ID_DELIMITER = ".api.";
 
-    public FabricService(
-            @Autowired FabricConfig fabricConfig,
-            @Autowired Mapper objectMapper,
-            @Autowired PasswordEncoder passwordEncoder,
-            @Autowired UserAccountRepository userAccountRepository
+    public FabricService(@Autowired FabricConfig fabricConfig,
+                         @Autowired Mapper objectMapper,
+                         @Autowired PasswordEncoder passwordEncoder,
+                         @Autowired UserAccountRepository userAccountRepository,
+                         @Autowired AccessControl accessControl
     ) {
+        this.accessControl = accessControl;
         this.fabricConfig = fabricConfig;
         this.objectMapper = objectMapper;
         this.passwordEncoder = passwordEncoder;
@@ -94,7 +100,7 @@ public class FabricService {
         this.registrar = this.registryCAConnector.registrarEnroll(admin);
         this.viewerRegistrar = this.viewerCAConnector.registrarEnroll(admin);
         String registryRegistrarEnrollment = this.registrar.getEnrollment().serialize(this.objectMapper);
-        String encodedSecret = passwordEncoder.encode(admin.getSecret());
+        String encodedSecret = this.passwordEncoder.encode(admin.getSecret());
         this.userAccountRepository.save(UserAccount.of(this.registrar, encodedSecret, registryRegistrarEnrollment));
         log.info("fabric-ca admin 계정 enroll 완료");
 
@@ -110,7 +116,7 @@ public class FabricService {
                 .build();
 
         String rootEnrollment = caEnrollment.serialize(objectMapper);
-        encodedSecret = passwordEncoder.encode(this.fabricConfig.getRootPassword());
+        encodedSecret = this.passwordEncoder.encode(this.fabricConfig.getRootPassword());
         this.userAccountRepository.save(UserAccount.of(client, this.fabricConfig.getRootNumber(), encodedSecret, rootEnrollment, Role.ROOT));
         log.info("fabric-ca root 계정 enroll 완료");
 
@@ -129,9 +135,11 @@ public class FabricService {
         return fabricConnector;
     }
 
+    public NetworkConfig getNetworkConfig() {
+        return this.networkConfig;
+    }
+
     public Enrollment register(CustomUserDetails userDetails) {
-        UserAccount userAccount = userDetails.getUserAccount();
-        String fabricId = userAccount.getFabricId();
         String name = userDetails.getUsername();
         String mspId = userDetails.getUserAccount().getMspId();
         String number = name.split(ID_DELIMITER)[1];
@@ -224,6 +232,28 @@ public class FabricService {
 
         this.rootClient = Client.of(register, enrollment);
         this.networkConfig = networkConfig;
+    }
+
+    public void addRegistryPeer(CustomUserDetails userDetails, FabricPeerAddRequest request) {
+        this.accessControl.hasRootRole(userDetails);
+        String basePath = this.fabricConfig.getPemFilePath();
+        File pemFile = new File(basePath, request.name());
+        pemFile.getParentFile().mkdirs();
+
+        try (FileWriter writer = new FileWriter(pemFile)) {
+            writer.write(request.pem());
+            writer.flush();
+        } catch (IOException e) {
+            throw new ServerException(ExceptionStatus.FILE_IO_EXCEPTION);
+        }
+
+        FabricPeer peer = FabricPeer.builder()
+                .name(request.name())
+                .url(request.url())
+                .pemFile(pemFile.getAbsolutePath())
+                .build();
+
+        this.networkConfig.addPeer(peer);
     }
 
     public FabricConnector getConnectorById(String id) {

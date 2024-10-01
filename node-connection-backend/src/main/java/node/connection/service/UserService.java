@@ -8,7 +8,7 @@ import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
 import node.connection._core.utils.AccessControl;
 import node.connection._core.utils.Mapper;
-import node.connection.dto.court.response.FabricCourtRequest;
+import node.connection.dto.root.response.FabricCourtRequest;
 import node.connection.dto.user.request.JoinDTO;
 import node.connection.entity.UserAccount;
 import node.connection.entity.constant.Role;

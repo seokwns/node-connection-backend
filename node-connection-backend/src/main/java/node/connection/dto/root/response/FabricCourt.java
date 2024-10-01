@@ -1,4 +1,4 @@
-package node.connection.dto.court.response;
+package node.connection.dto.root.response;
 
 import java.util.List;
 import java.util.Map;

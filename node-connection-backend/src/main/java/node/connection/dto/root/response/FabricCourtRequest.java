@@ -1,6 +1,4 @@
-package node.connection.dto.court.response;
-
-import com.fasterxml.jackson.databind.JsonNode;
+package node.connection.dto.root.response;
 
 public record FabricCourtRequest(
         String id,

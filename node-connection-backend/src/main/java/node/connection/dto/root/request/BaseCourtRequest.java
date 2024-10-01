@@ -1,4 +1,4 @@
-package node.connection.dto.court.request;
+package node.connection.dto.root.request;
 
 import lombok.Builder;
 import lombok.Getter;
