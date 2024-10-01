@@ -17,7 +17,7 @@ import java.util.Optional;
 @Slf4j
 public class ConfigDataService {
 
-    public static final String COURT_CHAIN_CODE = "court-chain-code";
+    public static final String ISSUANCE_CHAIN_CODE = "issuance-chain-code";
 
     public static final String REGISTRY_CHAIN_CODE = "registry-chain-code";
 
@@ -50,8 +50,8 @@ public class ConfigDataService {
         }
     }
 
-    public String getCourtChainCodeVersion() {
-        return this.getValueByKey(COURT_CHAIN_CODE)
+    public String getIssuanceChainCodeVersion() {
+        return this.getValueByKey(ISSUANCE_CHAIN_CODE)
                 .orElseThrow(() -> new ServerException(ExceptionStatus.KEY_NOT_FOUND));
     }
 
@@ -60,10 +60,10 @@ public class ConfigDataService {
                 .orElseThrow(() -> new ServerException(ExceptionStatus.KEY_NOT_FOUND));
     }
 
-    public void updateCourtChainCodeVersion(CustomUserDetails userDetails, String version) {
+    public void updateIssuanceChainCodeVersion(CustomUserDetails userDetails, String version) {
         this.accessControl.hasRootRole(userDetails);
-        this.updateValueByKey(COURT_CHAIN_CODE, version);
-        this.fabricConfig.setCourtChainCodeVersion(version);
+        this.updateValueByKey(ISSUANCE_CHAIN_CODE, version);
+        this.fabricConfig.setIssuanceChainCodeVersion(version);
     }
 
     public void updateRegistryChainCodeVersion(CustomUserDetails userDetails, String version) {

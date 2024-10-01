@@ -28,13 +28,13 @@ public class ApplicationLifecycleHandler implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        String courtVersion = this.configDataService.getCourtChainCodeVersion();
+        String issuanceVersion = this.configDataService.getIssuanceChainCodeVersion();
         String registryVersion = this.configDataService.getRegistryChainCodeVersion();
 
-        this.fabricConfig.setCourtChainCodeVersion(courtVersion);
+        this.fabricConfig.setIssuanceChainCodeVersion(issuanceVersion);
         this.fabricConfig.setRegistryChainCodeVersion(registryVersion);
 
-        log.info("chain-code 버전 초기화 완료 | court: {} | registry: {}", courtVersion, registryVersion);
+        log.info("chain-code 버전 초기화 완료 | registry: {} | issuance: {}", registryVersion, issuanceVersion);
     }
 
     @PreDestroy

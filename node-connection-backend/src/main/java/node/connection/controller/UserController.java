@@ -4,6 +4,7 @@ import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
 import node.connection.dto.root.response.FabricCourtRequest;
 import node.connection.dto.user.request.JoinDTO;
+import node.connection.dto.user.response.IssuanceHistoryDto;
 import node.connection.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,13 @@ public class UserController {
     public ResponseEntity<?> issuance(@AuthenticationPrincipal CustomUserDetails userDetails,
                                       @RequestBody String documentId
     ) {
+        String issuanceHash = this.userService.issuance(userDetails, documentId);
+        return ResponseEntity.ok().body(Response.success(issuanceHash));
+    }
 
+    @GetMapping("/issuance")
+    public ResponseEntity<?> getIssuanceHistories(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<IssuanceHistoryDto> historyDtos = this.userService.getIssuanceHistories(userDetails);
+        return ResponseEntity.ok().body(Response.success(historyDtos));
     }
 }

@@ -3,6 +3,7 @@ package node.connection.controller;
 import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
 import node.connection.dto.registry.RegistryDocumentDto;
+import node.connection.dto.registry.response.RegistryDocumentByHashDto;
 import node.connection.service.RegistryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Query;
@@ -34,11 +35,19 @@ public class RegistryController {
         return ResponseEntity.ok().body(Response.success(document));
     }
 
-    @GetMapping("")
+    @GetMapping("/address/{address}")
     public ResponseEntity<?> getRegistryDocumentByAddress(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                                          @Param("address") String address
+                                                          @PathVariable("address") String address
     ) {
         List<RegistryDocumentDto> documents = this.registryService.getRegistryDocumentByAddress(userDetails, address);
         return ResponseEntity.ok().body(Response.success(documents));
+    }
+
+    @GetMapping("/issuance-hash/{hash}")
+    public ResponseEntity<?> getRegistryDocumentByIssuanceHash(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                                               @PathVariable("hash") String issuanceHash
+    ) {
+        RegistryDocumentByHashDto dto = this.registryService.getRegistryDocumentByHash(userDetails, issuanceHash);
+        return ResponseEntity.ok().body(Response.success(dto));
     }
 }
