@@ -130,7 +130,7 @@ func (s *SmartContract) issuance(ctx contractapi.TransactionContextInterface, is
 
 	// 2. 등기부등본 정보 해싱
 	// 2-1. 등기부등본 정보 조회
-	registryDocument, err := ctx.GetStub().InvokeChaincode("registry", [][]byte{[]byte("GetRegistryDocumentByID"), []byte(registryDocumentID)})
+	registryDocument, err := ctx.GetStub().InvokeChaincode("registry", [][]byte{[]byte("GetRegistryDocumentByID"), []byte(registryDocumentID)}, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to invoke chaincode: %v", err)
 	}
