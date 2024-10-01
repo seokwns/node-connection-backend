@@ -118,7 +118,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 * @param 	registryDocument 등기부등본 정보
 * @return 발급된 등기부등본의 해시값
 */
-func (s *SmartContract) issuance(ctx contractapi.TransactionContextInterface, issuerData IssuerData, registryDocumentID string) (string, error) {
+func (s *SmartContract) Issuance(ctx contractapi.TransactionContextInterface, issuerData IssuerData, registryDocumentID string) (string, error) {
 	/*
 	* 1. 요청자 정보 PDC 저장
 	* 2. 등기부등본 정보 해싱
