@@ -189,7 +189,7 @@ func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.Tra
 		return err
 	}
 
-	return ctx.GetStub().PutState(document.ID, documentJSON)
+	return ctx.GetStub().PutState(id, documentJSON)
 }
 
 func (s *SmartContract) AddLandDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, landDesc LandDescription) error {
@@ -212,7 +212,7 @@ func (s *SmartContract) AddLandDescriptionToTitleSection(ctx contractapi.Transac
 		return err
 	}
 
-	return ctx.GetStub().PutState(document.ID, documentJSON)
+	return ctx.GetStub().PutState(id, documentJSON)
 }
 
 func (s *SmartContract) AddBuildingDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingPartDescription) error {
@@ -236,7 +236,7 @@ func (s *SmartContract) AddBuildingDescriptionToExclusivePart(ctx contractapi.Tr
 		return err
 	}
 
-	return ctx.GetStub().PutState(document.ID, documentJSON)
+	return ctx.GetStub().PutState(id, documentJSON)
 }
 
 func (s *SmartContract) AddLandRightDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, landRightDesc LandRightDescription) error {
@@ -260,7 +260,7 @@ func (s *SmartContract) AddLandRightDescriptionToExclusivePart(ctx contractapi.T
 		return err
 	}
 
-	return ctx.GetStub().PutState(document.ID, documentJSON)
+	return ctx.GetStub().PutState(id, documentJSON)
 }
 
 func (s *SmartContract) AddFirstSectionEntry(ctx contractapi.TransactionContextInterface, id string, firstSectionEntry FirstSection) error {
@@ -284,7 +284,7 @@ func (s *SmartContract) AddFirstSectionEntry(ctx contractapi.TransactionContextI
 		return err
 	}
 
-	return ctx.GetStub().PutState(document.ID, documentJSON)
+	return ctx.GetStub().PutState(id, documentJSON)
 }
 
 func (s *SmartContract) AddSecondSectionEntry(ctx contractapi.TransactionContextInterface, id string, secondSectionEntry SecondSection) error {
@@ -308,7 +308,7 @@ func (s *SmartContract) AddSecondSectionEntry(ctx contractapi.TransactionContext
 		return err
 	}
 
-	return ctx.GetStub().PutState(document.ID, documentJSON)
+	return ctx.GetStub().PutState(id, documentJSON)
 }
 
 func main() {
