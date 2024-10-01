@@ -53,7 +53,7 @@ if [[ "$CHAINCODE_DIR" != /* ]]; then
     CHAINCODE_DIR="$(pwd)/$CHAINCODE_DIR"
 fi
 
-if [[ "$COLLECTIONS_CONFIG" != /* ]]; then
+if [[ -n "$COLLECTIONS_CONFIG" && "$COLLECTIONS_CONFIG" != /* ]]; then
     COLLECTIONS_CONFIG="$(pwd)/chain-code/$CHAINCODE_NAME/$COLLECTIONS_CONFIG"
 fi
 
