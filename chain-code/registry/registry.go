@@ -99,16 +99,21 @@ func generateDocumentID(payload string) string {
 }
 
 // 등기부등본 생성
-func (s *SmartContract) CreateRegistryDocument(ctx contractapi.TransactionContextInterface, document RegistryDocument) error {
+func (s *SmartContract) CreateRegistryDocument(ctx contractapi.TransactionContextInterface, document RegistryDocument) (string, error) {
 	documentJSON, err := json.Marshal(document)
 	if err != nil {
-		return fmt.Errorf("failed to marshal document: %v", err)
+		return "", fmt.Errorf("failed to marshal document: %v", err)
 	}
 
 	id := generateDocumentID(string(documentJSON))
 	document.ID = id
 
-	return ctx.GetStub().PutState(id, documentJSON)
+	err = ctx.GetStub().PutState(id, documentJSON)
+	if err != nil {
+		return id, fmt.Errorf("failed to put document into world state: %v", err)
+	}
+
+	return id, err
 }
 
 func (s *SmartContract) GetRegistryDocumentByID(ctx contractapi.TransactionContextInterface, id string) (*RegistryDocument, error) {
