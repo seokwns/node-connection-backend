@@ -155,66 +155,140 @@ func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.Tran
 }
 
 func (s *SmartContract) AddBuildingDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingDescription) error {
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSPID: %v", err)
+	}
+
+	if mspid != "RegistryMSP" {
+		return fmt.Errorf("access denied: only RegistryMSP can read the data")
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	document.TitleSection.BuildingDescription = append(document.TitleSection.BuildingDescription, buildingDesc)
-	return s.updateRegistryDocument(ctx, document)
+	documentJSON, err := json.Marshal(document)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(document.ID, documentJSON)
 }
 
 func (s *SmartContract) AddLandDescriptionToTitleSection(ctx contractapi.TransactionContextInterface, id string, landDesc LandDescription) error {
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSPID: %v", err)
+	}
+
+	if mspid != "RegistryMSP" {
+		return fmt.Errorf("access denied: only RegistryMSP can read the data")
+	}
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	document.TitleSection.LandDescription = append(document.TitleSection.LandDescription, landDesc)
-	return s.updateRegistryDocument(ctx, document)
+	documentJSON, err := json.Marshal(document)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(document.ID, documentJSON)
 }
 
 func (s *SmartContract) AddBuildingDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, buildingDesc BuildingPartDescription) error {
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSPID: %v", err)
+	}
+
+	if mspid != "RegistryMSP" {
+		return fmt.Errorf("access denied: only RegistryMSP can read the data")
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	document.ExclusivePartDescription.BuildingPartDescription = append(document.ExclusivePartDescription.BuildingPartDescription, buildingDesc)
-	return s.updateRegistryDocument(ctx, document)
+	documentJSON, err := json.Marshal(document)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(document.ID, documentJSON)
 }
 
 func (s *SmartContract) AddLandRightDescriptionToExclusivePart(ctx contractapi.TransactionContextInterface, id string, landRightDesc LandRightDescription) error {
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSPID: %v", err)
+	}
+
+	if mspid != "RegistryMSP" {
+		return fmt.Errorf("access denied: only RegistryMSP can read the data")
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	document.ExclusivePartDescription.LandRightDescription = append(document.ExclusivePartDescription.LandRightDescription, landRightDesc)
-	return s.updateRegistryDocument(ctx, document)
+	documentJSON, err := json.Marshal(document)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(document.ID, documentJSON)
 }
 
 func (s *SmartContract) AddFirstSectionEntry(ctx contractapi.TransactionContextInterface, id string, firstSectionEntry FirstSection) error {
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSPID: %v", err)
+	}
+
+	if mspid != "RegistryMSP" {
+		return fmt.Errorf("access denied: only RegistryMSP can read the data")
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	document.FirstSection = append(document.FirstSection, firstSectionEntry)
-	return s.updateRegistryDocument(ctx, document)
+	documentJSON, err := json.Marshal(document)
+	if err != nil {
+		return err
+	}
+
+	return ctx.GetStub().PutState(document.ID, documentJSON)
 }
 
 func (s *SmartContract) AddSecondSectionEntry(ctx contractapi.TransactionContextInterface, id string, secondSectionEntry SecondSection) error {
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSPID: %v", err)
+	}
+
+	if mspid != "RegistryMSP" {
+		return fmt.Errorf("access denied: only RegistryMSP can read the data")
+	}
+
 	document, err := s.GetRegistryDocumentByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	document.SecondSection = append(document.SecondSection, secondSectionEntry)
-	return s.updateRegistryDocument(ctx, document)
-}
-
-func (s *SmartContract) updateRegistryDocument(ctx contractapi.TransactionContextInterface, document *RegistryDocument) error {
 	documentJSON, err := json.Marshal(document)
 	if err != nil {
 		return err
