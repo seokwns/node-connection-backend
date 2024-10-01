@@ -6,17 +6,22 @@ import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
 import node.connection._core.utils.AccessControl;
 import node.connection._core.utils.Mapper;
+import node.connection.data.RegistryDocument;
+import node.connection.data.RegistryDocumentBuilder;
 import node.connection.dto.registry.*;
 import node.connection.dto.root.request.CourtCreateRequest;
 import node.connection.entity.Court;
 import node.connection.entity.Jurisdiction;
+import node.connection.entity.RegistryDocumentIndex;
 import node.connection.entity.UserAccount;
+import node.connection.entity.pk.AddressIndexKey;
 import node.connection.hyperledger.FabricConfig;
 import node.connection.hyperledger.fabric.FabricConnector;
 import node.connection.hyperledger.fabric.FabricProposalResponse;
 import node.connection.hyperledger.fabric.NetworkConfig;
 import node.connection.repository.CourtRepository;
 import node.connection.repository.JurisdictionRepository;
+import node.connection.repository.RegistryDocumentIndexRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +41,10 @@ public class CourtService {
 
     private final JurisdictionRepository jurisdictionRepository;
 
+    private final RegistryDocumentIndexRepository registryDocumentIndexRepository;
+
+    private final RegistryDocumentBuilder documentBuilder;
+
     private final Mapper objectMapper;
 
     private final AccessControl accessControl;
@@ -46,6 +55,8 @@ public class CourtService {
             @Autowired FabricConfig fabricConfig,
             @Autowired CourtRepository courtRepository,
             @Autowired JurisdictionRepository jurisdictionRepository,
+            @Autowired RegistryDocumentIndexRepository registryDocumentIndexRepository,
+            @Autowired RegistryDocumentBuilder documentBuilder,
             @Autowired Mapper objectMapper,
             @Autowired AccessControl accessControl
     ) {
@@ -53,6 +64,8 @@ public class CourtService {
         this.fabricConfig = fabricConfig;
         this.courtRepository = courtRepository;
         this.jurisdictionRepository = jurisdictionRepository;
+        this.registryDocumentIndexRepository = registryDocumentIndexRepository;
+        this.documentBuilder = documentBuilder;
         this.objectMapper = objectMapper;
         this.accessControl = accessControl;
     }
@@ -74,14 +87,33 @@ public class CourtService {
         connector.connectToChannel(networkConfig);
     }
 
+    @Transactional
     public void createRegistryDocument(CustomUserDetails userDetails, RegistryDocumentDto document) {
         FabricConnector connector = this.getFabricConnector(userDetails);
-        String documentJson = this.objectMapper.writeValueAsString(document);
+        RegistryDocument registryDocument = this.documentBuilder.build("", document);
+        String documentJson = this.objectMapper.writeValueAsString(registryDocument);
 
         FabricProposalResponse response = connector.invoke("CreateRegistryDocument", List.of(documentJson));
         if (!response.getSuccess()) {
             throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
         }
+
+        String documentId = response.getPayload();
+
+        String address = document.address();
+        String detailAddress = document.detailAddress();
+
+        AddressIndexKey key = AddressIndexKey.builder()
+                .address(address)
+                .detailAddress(detailAddress)
+                .build();
+
+        RegistryDocumentIndex index = RegistryDocumentIndex.builder()
+                .key(key)
+                .documentId(documentId)
+                .build();
+
+        this.registryDocumentIndexRepository.save(index);
     }
 
     public void addBuildingDescriptionToTitleSection(CustomUserDetails userDetails,

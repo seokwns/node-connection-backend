@@ -35,11 +35,12 @@ public class RegistryController {
         return ResponseEntity.ok().body(Response.success(document));
     }
 
-    @GetMapping("/address/{address}")
+    @GetMapping("/address")
     public ResponseEntity<?> getRegistryDocumentByAddress(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                                          @PathVariable("address") String address
+                                                          @Param("address") String address,
+                                                          @Param("detailAddress") String detailAddress
     ) {
-        List<RegistryDocumentDto> documents = this.registryService.getRegistryDocumentByAddress(userDetails, address);
+        List<RegistryDocumentDto> documents = this.registryService.getRegistryDocumentByAddress(userDetails, address, detailAddress);
         return ResponseEntity.ok().body(Response.success(documents));
     }
 

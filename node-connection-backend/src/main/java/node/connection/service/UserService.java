@@ -10,6 +10,8 @@ import node.connection._core.utils.Mapper;
 import node.connection.data.BuildingDescription;
 import node.connection.data.RegistryDocument;
 import node.connection.data.IssuerData;
+import node.connection.data.RegistryDocumentBuilder;
+import node.connection.dto.registry.RegistryDocumentDto;
 import node.connection.dto.user.request.JoinDTO;
 import node.connection.dto.user.response.IssuanceHistoryDto;
 import node.connection.entity.IssuanceHistory;
@@ -52,6 +54,8 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final RegistryDocumentBuilder documentBuilder;
+
 
     public UserService(
             @Autowired FabricService fabricService,
@@ -61,7 +65,8 @@ public class UserService {
             @Autowired CourtRepository courtRepository,
             @Autowired IssuanceHistoryRepository issuanceHistoryRepository,
             @Autowired AccessControl accessControl,
-            @Autowired PasswordEncoder passwordEncoder
+            @Autowired PasswordEncoder passwordEncoder,
+            @Autowired RegistryDocumentBuilder documentBuilder
     ) {
         this.fabricService = fabricService;
         this.fabricConfig = fabricConfig;
@@ -71,6 +76,7 @@ public class UserService {
         this.issuanceHistoryRepository = issuanceHistoryRepository;
         this.accessControl = accessControl;
         this.passwordEncoder = passwordEncoder;
+        this.documentBuilder = documentBuilder;
     }
 
     @Transactional
@@ -139,7 +145,8 @@ public class UserService {
         }
 
         String payload = response.getPayload();
-        RegistryDocument document = this.objectMapper.readValue(payload, RegistryDocument.class);
+        RegistryDocumentDto documentDto = this.objectMapper.readValue(payload, RegistryDocumentDto.class);
+        RegistryDocument document = this.documentBuilder.build(documentId, documentDto);
         List<BuildingDescription> buildingDescriptions = document.getTitleSection().getBuildingDescription();
         String locationNumber = buildingDescriptions.get(buildingDescriptions.size() - 1).getLocationNumber();
 
@@ -157,7 +164,7 @@ public class UserService {
         );
 
         connector.setChaincode(FabricConfig.ISSUANCE_CHAIN_CODE, this.fabricConfig.getIssuanceChainCodeVersion());
-        response = connector.invoke("issuance", params);
+        response = connector.invoke("Issuance", params);
         if (!response.getSuccess()) {
             throw new ServerException(ExceptionStatus.FABRIC_INVOKE_ERROR);
         }

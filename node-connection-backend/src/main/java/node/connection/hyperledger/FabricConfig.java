@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Getter
 public class FabricConfig {
 
-    public static String ISSUANCE_CHAIN_CODE = "court";
+    public static String ISSUANCE_CHAIN_CODE = "issuance";
 
     public static String REGISTRY_CHAIN_CODE = "registry";
 

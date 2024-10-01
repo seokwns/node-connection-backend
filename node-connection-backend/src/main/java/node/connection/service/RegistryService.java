@@ -51,12 +51,12 @@ public class RegistryService {
         return this.objectMapper.readValue(payload, RegistryDocumentDto.class);
     }
 
-    public List<RegistryDocumentDto> getRegistryDocumentByAddress(CustomUserDetails userDetails, String address) {
+    public List<RegistryDocumentDto> getRegistryDocumentByAddress(CustomUserDetails userDetails, String address, String detailAddress) {
         FabricConnector connector = this.fabricService.getConnectorById(userDetails.getUsername());
-
-        List<String> params = List.of(address);
         connector.setChaincode(FabricConfig.REGISTRY_CHAIN_CODE, this.fabricConfig.getRegistryChainCodeVersion());
-        FabricProposalResponse response = connector.query("GetRegistryDocumentByLocationNumber", params);
+
+        List<String> params = List.of(address, detailAddress == null ? "" : detailAddress);
+        FabricProposalResponse response = connector.query("GetRegistryDocumentByAddress", params);
 
         String payload = response.getPayload();
         return this.objectMapper.readValue(payload, new TypeReference<List<RegistryDocumentDto>>() {});

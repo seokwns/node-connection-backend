@@ -12,6 +12,12 @@ public class RegistryDocument {
     @JsonProperty("id")
     private String id;
 
+    @JsonProperty("address")
+    private String address;
+
+    @JsonProperty("detailAddress")
+    private String detailAddress;
+
     @JsonProperty("titleSection")
     private TitleSection titleSection;
 

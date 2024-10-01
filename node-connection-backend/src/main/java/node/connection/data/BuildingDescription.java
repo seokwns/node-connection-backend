@@ -21,4 +21,6 @@ public class BuildingDescription {
 
     @JsonProperty("registrationCause")
     private String registrationCause;
+
+
 }
