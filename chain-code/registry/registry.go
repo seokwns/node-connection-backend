@@ -6,7 +6,7 @@ package main
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -20,6 +20,8 @@ type SmartContract struct {
 // 부동산 등기부등본 (Registry Document)
 type RegistryDocument struct {
 	ID                       string                     `json:"id"`                       // 등기부등본 ID
+	Address									 string											`json:"address"`									// 주소
+	DetailAddress						 string 										`json:"detailAddress"`					  // 상세주소
 	TitleSection             TitleSection               `json:"titleSection"`             // 표제부
 	ExclusivePartDescription ExclusivePartDescription   `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
 	FirstSection             []FirstSection             `json:"firstSection"`             // 갑구
@@ -95,7 +97,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 func generateDocumentID(payload string) string {
 	hash := sha256.New()
 	hash.Write([]byte(payload))
-	return hex.EncodeToString(hash.Sum(nil))
+	return base64.RawURLEncoding.EncodeToString(hash.Sum(nil))
 }
 
 // 등기부등본 생성
@@ -134,8 +136,8 @@ func (s *SmartContract) GetRegistryDocumentByID(ctx contractapi.TransactionConte
 	return &document, nil
 }
 
-func (s *SmartContract) GetRegistryDocumentByLocationNumber(ctx contractapi.TransactionContextInterface, locationNumber string) ([]*RegistryDocument, error) {
-	queryString := fmt.Sprintf(`{"selector":{"titleSection":{"buildingDescription":{"$elemMatch":{"locationNumber":"%s"}}}}}`, locationNumber)
+func (s *SmartContract) GetRegistryDocumentByAddress(ctx contractapi.TransactionContextInterface, address string, detailAddress string) ([]*RegistryDocument, error) {
+	queryString := fmt.Sprintf(`{"selector":{address: "%s", detailAddress: "%s"}`, address, detailAddress)
 	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %v", err)

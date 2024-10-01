@@ -6,7 +6,7 @@ package main
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -21,6 +21,8 @@ type SmartContract struct {
 // 부동산 등기부등본 (Registry Document)
 type RegistryDocument struct {
 	ID                       string                     `json:"id"`                       // 등기부등본 ID
+	Address									 string											`json:"address"`									// 주소
+	DetailAddress						 string 										`json:"detailAddress"`					  // 상세주소
 	TitleSection             TitleSection               `json:"titleSection"`             // 표제부
 	ExclusivePartDescription ExclusivePartDescription   `json:"exclusivePartDescription"` // 전유부분의 건물의 표시
 	FirstSection             []FirstSection             `json:"firstSection"`             // 갑구
@@ -196,19 +198,19 @@ func (s *SmartContract) issuance(ctx contractapi.TransactionContextInterface, is
 func encodeRegistryDocument(data []byte) string {
 	saltedData := string(data) + HASH_SALT
 	hash := sha256.Sum256([]byte(saltedData))
-	return hex.EncodeToString(hash[:])
+	return base64.RawURLEncoding.EncodeToString(hash[:])
 }
 
 func encodeIssuerData(data []byte) string {
 	saltedData := string(data) + HASH_SALT
 	hash := sha256.Sum256([]byte(saltedData))
-	return hex.EncodeToString(hash[:])
+	return base64.RawURLEncoding.EncodeToString(hash[:])
 }
 
 func generateIssuanceHash(data []byte) string {
 	saltedData := string(data) + HASH_SALT
 	hash := sha256.Sum256([]byte(saltedData))
-	return hex.EncodeToString(hash[:])
+	return base64.RawURLEncoding.EncodeToString(hash[:])
 }
 
 func (s *SmartContract) GetIssuanceDataByHash(ctx contractapi.TransactionContextInterface, issuanceHash string) (*IssuanceData, error) {
