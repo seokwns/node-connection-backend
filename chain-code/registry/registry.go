@@ -142,7 +142,7 @@ func (s *SmartContract) GetRegistryDocumentByID(ctx contractapi.TransactionConte
 }
 
 func (s *SmartContract) GetRegistryDocumentByAddress(ctx contractapi.TransactionContextInterface, address string, detailAddress string) ([]*RegistryDocument, error) {
-	queryString := fmt.Sprintf(`{"selector":{address: "%s", detailAddress: "%s"}`, address, detailAddress)
+	queryString := fmt.Sprintf(`{"selector":{"address": "%s", "detailAddress": "%s"}}`, address, detailAddress)
 	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %v", err)
