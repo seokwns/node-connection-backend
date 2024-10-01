@@ -75,4 +75,8 @@ if [ ! -x "./network/node-connection-network/network.sh" ]; then
     exit 1
 fi
 
-./network/node-connection-network/network.sh deployCC -c "$CHANNEL_NAME" -ccn "$CHAINCODE_NAME" -ccp "$CHAINCODE_DIR" -ccl "$LANGUAGE" -ccv "$CHAINCODE_VERSION" -cccg "$COLLECTIONS_CONFIG"
+if [[ -n "$COLLECTIONS_CONFIG" ]]; then
+    ./network/node-connection-network/network.sh deployCC -c "$CHANNEL_NAME" -ccn "$CHAINCODE_NAME" -ccp "$CHAINCODE_DIR" -ccl "$LANGUAGE" -ccv "$CHAINCODE_VERSION" -cccg "$COLLECTIONS_CONFIG"
+else
+    ./network/node-connection-network/network.sh deployCC -c "$CHANNEL_NAME" -ccn "$CHAINCODE_NAME" -ccp "$CHAINCODE_DIR" -ccl "$LANGUAGE" -ccv "$CHAINCODE_VERSION"
+fi
