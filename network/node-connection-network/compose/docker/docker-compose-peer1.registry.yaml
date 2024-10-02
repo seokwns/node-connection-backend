@@ -16,6 +16,7 @@ services:
   peer1.registry.node.connection:
     container_name: peer1.registry.node.connection
     image: hyperledger/fabric-peer:latest
+    restart: always
     labels:
       service: hyperledger-fabric
     environment:
@@ -38,12 +39,16 @@ services:
       - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.registry.node.connection:8051
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.registry.node.connection:8051
       - CORE_PEER_LOCALMSPID=RegistryMSP
-      - CORE_OPERATIONS_LISTENADDRESS=0.0.0.0:18051
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer1.registry.node.connection:18051
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer1registry"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
     volumes:
       - /var/run/docker.sock:/host/var/run/docker.sock
       - ./docker/peercfg:/etc/hyperledger/peercfg
-      - ../organizations/peerOrganizations/registry.node.connection/peers/peer1.registry.node.connection/msp:/etc/hyperledger/fabric
-      - ../organizations/peerOrganizations/registry.node.connection/peers/peer1.registry.node.connection/tls:/etc/hyperledger/fabric
+      - ../organizations/peerOrganizations/registry.node.connection/peers/peer1.registry.node.connection/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/registry.node.connection/peers/peer1.registry.node.connection/tls:/etc/hyperledger/fabric/tls
       - peer1.registry.node.connection:/var/hyperledger/production
     working_dir: /root
     command: peer node start
