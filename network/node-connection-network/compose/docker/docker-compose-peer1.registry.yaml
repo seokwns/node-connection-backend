@@ -49,7 +49,7 @@ services:
       - ./docker/peercfg:/etc/hyperledger/peercfg
       - ../organizations/peerOrganizations/registry.node.connection/peers/peer1.registry.node.connection/msp:/etc/hyperledger/fabric/msp
       - ../organizations/peerOrganizations/registry.node.connection/peers/peer1.registry.node.connection/tls:/etc/hyperledger/fabric/tls
-      - ../organizations/peerOrganizations/registry.node.connection0/peers/peer1.registry.node.connection:/etc/hyperledger/fabric
+      - ../organizations/peerOrganizations/registry.node.connection/peers/peer1.registry.node.connection:/etc/hyperledger/fabric
       - peer1.registry.node.connection:/var/hyperledger/production
     working_dir: /root
     command: peer node start
