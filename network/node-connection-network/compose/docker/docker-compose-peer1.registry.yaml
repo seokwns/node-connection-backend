@@ -13,6 +13,24 @@ networks:
     name: node_connection_network
 
 services:
+  couchdb2:
+    container_name: couchdb2
+    image: couchdb:3.3.3
+    restart: always
+    labels:
+      service: hyperledger-fabric
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
+    # for example map it to utilize Fauxton User Interface in dev environments.
+    ports:
+      - '9984:5984'
+    networks:
+      - test
+
   peer1.registry.node.connection:
     container_name: peer1.registry.node.connection
     image: hyperledger/fabric-peer:latest
@@ -45,6 +63,13 @@ services:
       - CORE_METRICS_PROVIDER=prometheus
       - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer1registry"}
       - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb2:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     volumes:
       - /var/run/docker.sock:/host/var/run/docker.sock
       - /home/seokwns/workspace/project/node-connection-backend/network/node-connection-network/compose/docker/peercfg:/etc/hyperledger/peercfg
@@ -57,3 +82,5 @@ services:
       - 18051:18051
     networks:
       - test
+    depends_on:
+      - couchdb2
