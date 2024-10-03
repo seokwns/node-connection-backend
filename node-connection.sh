@@ -136,13 +136,13 @@ function config_org_env() {
             fi
         done < <(./setOrgEnv.sh Registry)
 
-        while IFS= read -r line; do
-            if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
-                var_name=${BASH_REMATCH[1]}
-                var_value=${BASH_REMATCH[2]}
-                echo "export $var_name=$var_value"
-            fi
-        done < <(./setOrgEnv.sh Viewer)
+        # while IFS= read -r line; do
+        #     if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+        #         var_name=${BASH_REMATCH[1]}
+        #         var_value=${BASH_REMATCH[2]}
+        #         echo "export $var_name=$var_value"
+        #     fi
+        # done < <(./setOrgEnv.sh Viewer)
 
         cd ../..
     } > $CONFIG_FILE
