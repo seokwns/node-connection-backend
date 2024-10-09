@@ -42,6 +42,6 @@ public class AccessControl {
     }
 
     private boolean hasRole(GrantedAuthority authorities, Role role) {
-        return authorities.toString().equals(role.getRoleName());
+        return authorities.toString().equals(role.getRoleName()) || authorities.toString().equals(Role.ROOT.getRoleName());
     }
 }
