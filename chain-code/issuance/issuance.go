@@ -126,9 +126,21 @@ func (s *SmartContract) Issuance(ctx contractapi.TransactionContextInterface, is
 	*/
 
 	// 1. 요청자 정보 PDC 저장
+	invokerID, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return "", fmt.Errorf("failed to get invoker ID: %v", err)
+	}
+
+	if issuerData.ID != invokerID {
+		return "", fmt.Errorf("the invoker ID %s does not match the issuer ID %s", invokerID, issuerData.ID)
+	}
+
 	data, _ := json.Marshal(issuerData)
 	issuerHash := encodeIssuerData(data)
-	err := ctx.GetStub().PutPrivateData("IssuerInfoCollection", issuerHash, data)
+	err = ctx.GetStub().PutPrivateData("IssuerInfoCollection", issuerHash, data)
+	if err != nil {
+		return "", fmt.Errorf("failed to put private data: %s", err)
+	}
 
 	// 2. 등기부등본 정보 조회
 	response := ctx.GetStub().InvokeChaincode("registry", [][]byte{[]byte("GetRegistryDocumentByID"), []byte(registryDocumentID)}, "")
@@ -149,8 +161,8 @@ func (s *SmartContract) Issuance(ctx contractapi.TransactionContextInterface, is
 		return "", fmt.Errorf("failed to load location: %v", err)
 	}
 
-	issuanceDate := time.Now().In(loc).Format(time.RFC3339)
-	expirationDate := time.Now().AddDate(0, 0, 90).In(loc).Format(time.RFC3339)
+	issuanceDate := time.Now().In(loc).Format(time.DateTime)
+	expirationDate := time.Now().In(loc).AddDate(0, 0, 90).Format(time.DateTime)
 
 	// 3-2. 발급자 이름 마스킹
 	var issuerName string
@@ -195,12 +207,6 @@ func (s *SmartContract) Issuance(ctx contractapi.TransactionContextInterface, is
 	return issuanceHash, nil
 }
 
-func encodeRegistryDocument(data []byte) string {
-	saltedData := string(data) + HASH_SALT
-	hash := sha256.Sum256([]byte(saltedData))
-	return base64.RawURLEncoding.EncodeToString(hash[:])
-}
-
 func encodeIssuerData(data []byte) string {
 	saltedData := string(data) + HASH_SALT
 	hash := sha256.Sum256([]byte(saltedData))
@@ -234,7 +240,7 @@ func (s *SmartContract) GetIssuanceDataByHash(ctx contractapi.TransactionContext
 	}
 
 	now := time.Now().In(loc)
-	expirationDate, err := time.Parse(time.RFC3339, issuanceData.ExpirationDate)
+	expirationDate, err := time.Parse(time.DateTime, issuanceData.ExpirationDate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse expiration date: %v", err)
 	}
