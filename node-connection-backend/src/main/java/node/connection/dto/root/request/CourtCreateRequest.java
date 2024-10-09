@@ -1,35 +1,16 @@
 package node.connection.dto.root.request;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-
 import java.util.List;
 
-@Getter
-public class CourtCreateRequest extends BaseCourtRequest {
-    private final String channelName;
-    private final String phoneNumber;
-    private final String address;
-    private final String faxNumber;
-    private final List<String> jurisdictions;
-
-    @JsonCreator
-    public CourtCreateRequest(
-            @JsonProperty("court") String court,
-            @JsonProperty("support") String support,
-            @JsonProperty("office") String office,
-            @JsonProperty("channelName") String channelName,
-            @JsonProperty("phoneNumber") String phoneNumber,
-            @JsonProperty("address") String address,
-            @JsonProperty("faxNumber") String faxNumber,
-            @JsonProperty("jurisdictions") List<String> jurisdictions
-    ) {
-        super(court, support, office);
-        this.channelName = channelName;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.faxNumber = faxNumber;
-        this.jurisdictions = jurisdictions;
-    }
+public record CourtCreateRequest(
+        String court,
+        String support,
+        String office,
+        String channelName,
+        String phoneNumber,
+        String address,
+        String faxNumber,
+        String city,
+        List<String> districts
+) {
 }

@@ -15,8 +15,4 @@ public class BaseCourtRequest {
         this.support = support;
         this.office = office;
     }
-
-    public String getCourtId() {
-        return court + "_" + support + "_" + office;
-    }
 }

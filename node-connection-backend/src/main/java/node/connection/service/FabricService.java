@@ -195,6 +195,18 @@ public class FabricService {
         return this.registryCAConnector.enroll(id, secret);
     }
 
+    public void enroll(String mspId, String id, String secret) {
+        if (mspId.equals(REGISTRY_MSP)) {
+            this.registryCAConnector.enroll(id, secret);
+        }
+        else if (mspId.equals(VIEWER_MSP)) {
+            this.viewerCAConnector.enroll(id, secret);
+        }
+        else {
+            throw new BadRequestException(ExceptionStatus.INVALID_MSP_ID);
+        }
+    }
+
     private void initialize() {
         String id = getId(this.fabricConfig.getRootMsp(), this.fabricConfig.getRootNumber());
         UserAccount register = this.userAccountRepository.findById(id)
@@ -234,35 +246,14 @@ public class FabricService {
         this.networkConfig = networkConfig;
     }
 
-    public void addRegistryPeer(CustomUserDetails userDetails, FabricPeerAddRequest request) {
-        this.accessControl.hasRootRole(userDetails);
-        String basePath = this.fabricConfig.getPemFilePath();
-        File pemFile = new File(basePath, request.name());
-        pemFile.getParentFile().mkdirs();
-
-        try (FileWriter writer = new FileWriter(pemFile)) {
-            writer.write(request.pem());
-            writer.flush();
-        } catch (IOException e) {
-            throw new ServerException(ExceptionStatus.FILE_IO_EXCEPTION);
-        }
-
-        FabricPeer peer = FabricPeer.builder()
-                .name(request.name())
-                .url(request.url())
-                .pemFile(pemFile.getAbsolutePath())
-                .build();
-
-        this.networkConfig.addPeer(peer);
-    }
-
-    public FabricConnector getConnectorById(String id) {
+    public FabricConnector getConnectorByIdAndChannel(String id, String channel) {
         UserAccount register = this.userAccountRepository.findById(id)
                 .orElseThrow(() -> new ServerException(ExceptionStatus.NO_FABRIC_CA_DATA));
 
         CAEnrollment enrollment = CAEnrollment.deserialize(this.objectMapper, register.getEnrollment());
         Client client = Client.of(register, enrollment);
         FabricConnector connector = new FabricConnector(client);
+        this.networkConfig.setChannelName(channel);
         connector.connectToChannel(this.networkConfig);
 
         return connector;

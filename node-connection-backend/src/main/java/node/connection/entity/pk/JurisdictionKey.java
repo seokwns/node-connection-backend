@@ -12,13 +12,13 @@ import java.io.Serializable;
 @Getter
 @Setter
 @NoArgsConstructor
-public class IssuanceHistoryKey implements Serializable {
-    private String fabricId;
-    private String issuanceHash;
+public class JurisdictionKey implements Serializable {
+    private String city;
+    private String district;
 
     @Builder
-    public IssuanceHistoryKey(String fabricId, String issuanceHash) {
-        this.fabricId = fabricId;
-        this.issuanceHash = issuanceHash;
+    public JurisdictionKey(String city, String district) {
+        this.city = city;
+        this.district = district;
     }
 }

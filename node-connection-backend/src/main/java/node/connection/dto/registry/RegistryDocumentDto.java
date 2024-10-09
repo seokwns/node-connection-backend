@@ -9,6 +9,7 @@ import java.util.List;
 public record RegistryDocumentDto(
         @JsonProperty("address") String address,
         @JsonProperty("detailAddress") String detailAddress,
+        @JsonProperty("id") String id,
         @JsonProperty("titleSection") TitleSectionDto titleSectionDto,
         @JsonProperty("exclusivePartDescription") ExclusivePartDescriptionDto exclusivePartDescriptionDto,
         @JsonProperty("firstSection") List<FirstSectionDto> firstSectionDto,

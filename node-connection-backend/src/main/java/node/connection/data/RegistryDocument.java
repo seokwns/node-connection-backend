@@ -7,7 +7,6 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-@Builder
 public class RegistryDocument {
     @JsonProperty("id")
     private String id;
@@ -29,4 +28,15 @@ public class RegistryDocument {
 
     @JsonProperty("secondSection")
     private List<SecondSection> secondSection;
+
+    @Builder
+    public RegistryDocument(String id, String address, String detailAddress, TitleSection titleSection, ExclusivePartDescription exclusivePartDescription, List<FirstSection> firstSection, List<SecondSection> secondSection) {
+        this.id = id;
+        this.address = address;
+        this.detailAddress = detailAddress;
+        this.titleSection = titleSection;
+        this.exclusivePartDescription = exclusivePartDescription;
+        this.firstSection = firstSection;
+        this.secondSection = secondSection;
+    }
 }

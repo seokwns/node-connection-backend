@@ -11,6 +11,6 @@ import java.util.Optional;
 @Repository
 public interface JurisdictionRepository extends JpaRepository<Jurisdiction, String> {
 
-    @Query("select j from Jurisdiction j where :address like concat('%', j.jurisdiction, '%') ")
-    Optional<Jurisdiction> getJurisdictionByAddress(String address);
+    @Query("select j.court from Jurisdiction j where :address like concat(j.key.city, ' ', j.key.district, '%')")
+    Optional<Court> findCourtByAddress(String address);
 }

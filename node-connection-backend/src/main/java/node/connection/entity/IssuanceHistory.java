@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import node.connection.entity.pk.IssuanceHistoryKey;
 
 import java.time.LocalDateTime;
 
@@ -12,8 +11,8 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 public class IssuanceHistory {
-    @EmbeddedId
-    private IssuanceHistoryKey key;
+    @Id
+    private String issuanceHash;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private UserAccount userAccount;
@@ -25,6 +24,9 @@ public class IssuanceHistory {
     private String address;
 
     @Column
+    private String detailAddress;
+
+    @Column
     private LocalDateTime expiredAt;
 
     @Column
@@ -34,11 +36,12 @@ public class IssuanceHistory {
     private LocalDateTime updatedAt;
 
     @Builder
-    public IssuanceHistory(IssuanceHistoryKey key, UserAccount userAccount, String registryDocumentId, String address, LocalDateTime expiredAt) {
-        this.key = key;
+    public IssuanceHistory(String issuanceHash, UserAccount userAccount, String registryDocumentId, String address, String detailAddress, LocalDateTime expiredAt) {
+        this.issuanceHash = issuanceHash;
         this.userAccount = userAccount;
         this.registryDocumentId = registryDocumentId;
         this.address = address;
+        this.detailAddress = detailAddress;
         this.expiredAt = expiredAt;
     }
 

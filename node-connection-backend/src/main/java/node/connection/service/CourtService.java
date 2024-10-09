@@ -2,12 +2,12 @@ package node.connection.service;
 
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
+import node.connection._core.exception.client.BadRequestException;
 import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
 import node.connection._core.utils.AccessControl;
 import node.connection._core.utils.Mapper;
-import node.connection.data.RegistryDocument;
-import node.connection.data.RegistryDocumentBuilder;
+import node.connection.data.*;
 import node.connection.dto.registry.*;
 import node.connection.dto.root.request.CourtCreateRequest;
 import node.connection.entity.Court;
@@ -78,19 +78,19 @@ public class CourtService {
         this.courtRepository.save(court);
 
         List<Jurisdiction> jurisdictions = new ArrayList<>();
-        request.getJurisdictions().forEach(jurisdiction -> jurisdictions.add(Jurisdiction.of(jurisdiction, court)));
+        request.districts().forEach(district -> jurisdictions.add(Jurisdiction.of(request.city(), district, court)));
         this.jurisdictionRepository.saveAll(jurisdictions);
 
         FabricConnector connector = this.fabricService.getRootFabricConnector();
         NetworkConfig networkConfig = this.fabricService.getNetworkConfig();
-        networkConfig.setChannelName(request.getChannelName());
+        networkConfig.setChannelName(request.channelName());
         connector.connectToChannel(networkConfig);
     }
 
     @Transactional
     public void createRegistryDocument(CustomUserDetails userDetails, RegistryDocumentDto document) {
-        FabricConnector connector = this.getFabricConnector(userDetails);
         RegistryDocument registryDocument = this.documentBuilder.build("", document);
+        FabricConnector connector = this.getFabricConnector(userDetails, document.address());
         String documentJson = this.objectMapper.writeValueAsString(registryDocument);
 
         FabricProposalResponse response = connector.invoke("CreateRegistryDocument", List.of(documentJson));
@@ -120,9 +120,17 @@ public class CourtService {
                                                      String documentId,
                                                      BuildingDescriptionDto data
     ) {
-        FabricConnector connector = this.getFabricConnector(userDetails);
+        FabricConnector connector = this.getFabricConnector(userDetails, data.address());
 
-        String payload = this.objectMapper.writeValueAsString(data);
+        BuildingDescription buildingDescription = BuildingDescription.builder()
+                .displayNumber(data.displayNumber())
+                .receiptDate(data.receiptDate())
+                .locationNumber(data.locationNumber())
+                .buildingDetails(data.buildingDetails())
+                .registrationCause(data.registrationCause())
+                .build();
+
+        String payload = this.objectMapper.writeValueAsString(buildingDescription);
         List<String> params = List.of(documentId, payload);
 
         FabricProposalResponse response = connector.invoke("AddBuildingDescriptionToTitleSection", params);
@@ -135,9 +143,17 @@ public class CourtService {
                                                  String documentId,
                                                  LandDescriptionDto data
     ) {
-        FabricConnector connector = this.getFabricConnector(userDetails);
+        FabricConnector connector = this.getFabricConnector(userDetails, data.address());
 
-        String payload = this.objectMapper.writeValueAsString(data);
+        LandDescription landDescription = LandDescription.builder()
+                .displayNumber(data.displayNumber())
+                .locationNumber(data.locationNumber())
+                .landType(data.landType())
+                .area(data.area())
+                .registrationCause(data.registrationCause())
+                .build();
+
+        String payload = this.objectMapper.writeValueAsString(landDescription);
         List<String> params = List.of(documentId, payload);
 
         FabricProposalResponse response = connector.invoke("AddLandDescriptionToTitleSection", params);
@@ -150,9 +166,17 @@ public class CourtService {
                                                       String documentId,
                                                       BuildingPartDescriptionDto data
     ) {
-        FabricConnector connector = this.getFabricConnector(userDetails);
+        FabricConnector connector = this.getFabricConnector(userDetails, data.address());
 
-        String payload = this.objectMapper.writeValueAsString(data);
+        BuildingPartDescription buildingPartDescription = BuildingPartDescription.builder()
+                .displayNumber(data.displayNumber())
+                .receiptDate(data.receiptDate())
+                .partNumber(data.partNumber())
+                .buildingDetails(data.buildingDetails())
+                .registrationCause(data.registrationCause())
+                .build();
+
+        String payload = this.objectMapper.writeValueAsString(buildingPartDescription);
         List<String> params = List.of(documentId, payload);
 
         FabricProposalResponse response = connector.invoke("AddBuildingDescriptionToExclusivePart", params);
@@ -165,9 +189,16 @@ public class CourtService {
                                                        String documentId,
                                                        LandRightDescriptionDto data
     ) {
-        FabricConnector connector = this.getFabricConnector(userDetails);
+        FabricConnector connector = this.getFabricConnector(userDetails, data.address());
 
-        String payload = this.objectMapper.writeValueAsString(data);
+        LandRightDescription landRightDescription = LandRightDescription.builder()
+                .displayNumber(data.displayNumber())
+                .landRightType(data.landRightType())
+                .landRightRatio(data.landRightRatio())
+                .registrationCause(data.registrationCause())
+                .build();
+
+        String payload = this.objectMapper.writeValueAsString(landRightDescription);
         List<String> params = List.of(documentId, payload);
 
         FabricProposalResponse response = connector.invoke("AddLandRightDescriptionToExclusivePart", params);
@@ -180,9 +211,17 @@ public class CourtService {
                                      String documentId,
                                      FirstSectionDto data
     ) {
-        FabricConnector connector = this.getFabricConnector(userDetails);
+        FabricConnector connector = this.getFabricConnector(userDetails, data.address());
 
-        String payload = this.objectMapper.writeValueAsString(data);
+        FirstSection firstSection = FirstSection.builder()
+                .rankNumber(data.rankNumber())
+                .registrationPurpose(data.registrationPurpose())
+                .receiptDate(data.receiptDate())
+                .registrationCause(data.registrationCause())
+                .holderAndAdditionalInfo(data.holderAndAdditionalInfo())
+                .build();
+
+        String payload = this.objectMapper.writeValueAsString(firstSection);
         List<String> params = List.of(documentId, payload);
 
         FabricProposalResponse response = connector.invoke("AddFirstSectionEntry", params);
@@ -195,9 +234,17 @@ public class CourtService {
                                       String documentId,
                                       SecondSectionDto data
     ) {
-        FabricConnector connector = this.getFabricConnector(userDetails);
+        FabricConnector connector = this.getFabricConnector(userDetails, data.address());
 
-        String payload = this.objectMapper.writeValueAsString(data);
+        SecondSection secondSection = SecondSection.builder()
+                .rankNumber(data.rankNumber())
+                .registrationPurpose(data.registrationPurpose())
+                .receiptDate(data.receiptDate())
+                .registrationCause(data.registrationCause())
+                .holderAndAdditionalInfo(data.holderAndAdditionalInfo())
+                .build();
+
+        String payload = this.objectMapper.writeValueAsString(secondSection);
         List<String> params = List.of(documentId, payload);
 
         FabricProposalResponse response = connector.invoke("AddSecondSectionEntry", params);
@@ -206,13 +253,17 @@ public class CourtService {
         }
     }
 
-    private FabricConnector getFabricConnector(CustomUserDetails userDetails) {
+    private FabricConnector getFabricConnector(CustomUserDetails userDetails, String address) {
         this.accessControl.hasRegistryRole(userDetails);
+
+        Court court = this.jurisdictionRepository.findCourtByAddress(address)
+                .orElseThrow(() -> new BadRequestException(ExceptionStatus.NOT_SUPPORT_LOCATION));
 
         UserAccount userAccount = userDetails.getUserAccount();
         String id = userAccount.getFabricId();
-        FabricConnector connector = this.fabricService.getConnectorById(id);
+        FabricConnector connector = this.fabricService.getConnectorByIdAndChannel(id, court.getChannelName());
         connector.setChaincode(FabricConfig.REGISTRY_CHAIN_CODE, this.fabricConfig.getRegistryChainCodeVersion());
+
         return connector;
     }
 }

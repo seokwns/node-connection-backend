@@ -1,5 +1,6 @@
 package node.connection.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.client.BadRequestException;
@@ -12,18 +13,20 @@ import node.connection.data.RegistryDocument;
 import node.connection.data.IssuerData;
 import node.connection.data.RegistryDocumentBuilder;
 import node.connection.dto.registry.RegistryDocumentDto;
+import node.connection.dto.user.request.IssuanceRequest;
 import node.connection.dto.user.request.JoinDTO;
 import node.connection.dto.user.response.IssuanceHistoryDto;
+import node.connection.entity.Court;
 import node.connection.entity.IssuanceHistory;
 import node.connection.entity.UserAccount;
 import node.connection.entity.constant.Role;
-import node.connection.entity.pk.IssuanceHistoryKey;
 import node.connection.hyperledger.FabricConfig;
 import node.connection.hyperledger.fabric.FabricConnector;
 import node.connection.hyperledger.fabric.FabricProposalResponse;
 import node.connection.hyperledger.fabric.ca.CAEnrollment;
 import node.connection.repository.CourtRepository;
 import node.connection.repository.IssuanceHistoryRepository;
+import node.connection.repository.JurisdictionRepository;
 import node.connection.repository.UserAccountRepository;
 import org.hyperledger.fabric.sdk.Enrollment;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +53,8 @@ public class UserService {
 
     private final IssuanceHistoryRepository issuanceHistoryRepository;
 
+    private final JurisdictionRepository jurisdictionRepository;
+
     private final AccessControl accessControl;
 
     private final PasswordEncoder passwordEncoder;
@@ -57,16 +62,16 @@ public class UserService {
     private final RegistryDocumentBuilder documentBuilder;
 
 
-    public UserService(
-            @Autowired FabricService fabricService,
-            @Autowired FabricConfig fabricConfig,
-            @Autowired Mapper objectMapper,
-            @Autowired UserAccountRepository userAccountRepository,
-            @Autowired CourtRepository courtRepository,
-            @Autowired IssuanceHistoryRepository issuanceHistoryRepository,
-            @Autowired AccessControl accessControl,
-            @Autowired PasswordEncoder passwordEncoder,
-            @Autowired RegistryDocumentBuilder documentBuilder
+    public UserService(@Autowired FabricService fabricService,
+                       @Autowired FabricConfig fabricConfig,
+                       @Autowired Mapper objectMapper,
+                       @Autowired UserAccountRepository userAccountRepository,
+                       @Autowired CourtRepository courtRepository,
+                       @Autowired IssuanceHistoryRepository issuanceHistoryRepository,
+                       @Autowired JurisdictionRepository jurisdictionRepository,
+                       @Autowired AccessControl accessControl,
+                       @Autowired PasswordEncoder passwordEncoder,
+                       @Autowired RegistryDocumentBuilder documentBuilder
     ) {
         this.fabricService = fabricService;
         this.fabricConfig = fabricConfig;
@@ -74,6 +79,7 @@ public class UserService {
         this.userAccountRepository = userAccountRepository;
         this.courtRepository = courtRepository;
         this.issuanceHistoryRepository = issuanceHistoryRepository;
+        this.jurisdictionRepository = jurisdictionRepository;
         this.accessControl = accessControl;
         this.passwordEncoder = passwordEncoder;
         this.documentBuilder = documentBuilder;
@@ -128,28 +134,31 @@ public class UserService {
             throw new BadRequestException(ExceptionStatus.INVALID_PASSWORD);
         }
 
-        this.fabricService.getConnectorById(id);
+        this.fabricService.enroll(userAccount.getMspId(), userAccount.getFabricId(), userAccount.getSecret());
     }
 
     @Transactional
-    public String issuance(CustomUserDetails userDetails, String documentId) {
+    public String issuance(CustomUserDetails userDetails, IssuanceRequest request) {
         UserAccount userAccount = userDetails.getUserAccount();
         String id = userAccount.getFabricId();
 
-        FabricConnector connector = this.fabricService.getConnectorById(id);
+        Court court = this.jurisdictionRepository.findCourtByAddress(request.address())
+                .orElseThrow(() -> new BadRequestException(ExceptionStatus.NOT_SUPPORT_LOCATION));
+
+        FabricConnector connector = this.fabricService.getConnectorByIdAndChannel(id, court.getChannelName());
 
         connector.setChaincode(FabricConfig.REGISTRY_CHAIN_CODE, this.fabricConfig.getRegistryChainCodeVersion());
-        FabricProposalResponse response = connector.query("GetRegistryDocumentByID", List.of(documentId));
+
+        List<String> params = List.of(request.address(), request.detailAddress() == null ? "" : request.detailAddress());
+        FabricProposalResponse response = connector.query("GetRegistryDocumentByAddress", params);
+
         if (!response.getSuccess()) {
             throw new ServerException(ExceptionStatus.FABRIC_QUERY_ERROR);
         }
 
         String payload = response.getPayload();
-        RegistryDocumentDto documentDto = this.objectMapper.readValue(payload, RegistryDocumentDto.class);
-        RegistryDocument document = this.documentBuilder.build(documentId, documentDto);
-        List<BuildingDescription> buildingDescriptions = document.getTitleSection().getBuildingDescription();
-        String locationNumber = buildingDescriptions.get(buildingDescriptions.size() - 1).getLocationNumber();
-
+        List<RegistryDocumentDto> registryDocument = this.objectMapper.readValue(payload, new TypeReference<List<RegistryDocumentDto>>() {});
+        String documentId = registryDocument.get(0).id();
 
         IssuerData issuerData = new IssuerData(
                 userAccount.getFabricId(),
@@ -158,7 +167,7 @@ public class UserService {
                 userAccount.getEmail()
         );
 
-        List<String> params = List.of(
+        params = List.of(
                 this.objectMapper.writeValueAsString(issuerData),
                 documentId
         );
@@ -171,16 +180,12 @@ public class UserService {
 
         String issuanceHash = response.getPayload();
 
-        IssuanceHistoryKey key = IssuanceHistoryKey.builder()
-                .fabricId(userAccount.getFabricId())
-                .issuanceHash(issuanceHash)
-                .build();
-
         IssuanceHistory issuanceHistory = IssuanceHistory.builder()
-                .key(key)
+                .issuanceHash(issuanceHash)
                 .userAccount(userAccount)
-                .registryDocumentId(document.getId())
-                .address(locationNumber)
+                .registryDocumentId(documentId)
+                .address(request.address())
+                .detailAddress(request.detailAddress())
                 .expiredAt(LocalDateTime.now().plusDays(90))
                 .build();
 
@@ -194,7 +199,7 @@ public class UserService {
         List<IssuanceHistory> histories = this.issuanceHistoryRepository.findAllByUserAccount(userAccount);
         return histories.stream()
                 .map(history -> new IssuanceHistoryDto(
-                        history.getKey().getIssuanceHash(),
+                        history.getIssuanceHash(),
                         history.getAddress(),
                         history.getCreatedAt(),
                         history.getExpiredAt()

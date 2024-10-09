@@ -10,10 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,28 +24,21 @@ public class RegistryController {
         this.registryService = registryService;
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getRegistryDocument(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                         @PathVariable("id") String id
-    ) {
-        RegistryDocumentDto document = this.registryService.getRegistryDocumentById(userDetails, id);
-        return ResponseEntity.ok().body(Response.success(document));
-    }
-
-    @GetMapping("/address")
+    @GetMapping("")
     public ResponseEntity<?> getRegistryDocumentByAddress(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                                          @Param("address") String address,
-                                                          @Param("detailAddress") String detailAddress
+                                                          @RequestParam("address") String address,
+                                                          @RequestParam(value = "detailAddress", required = false) String detailAddress
     ) {
         List<RegistryDocumentDto> documents = this.registryService.getRegistryDocumentByAddress(userDetails, address, detailAddress);
         return ResponseEntity.ok().body(Response.success(documents));
     }
 
-    @GetMapping("/issuance-hash/{hash}")
+    @GetMapping("/issuance")
     public ResponseEntity<?> getRegistryDocumentByIssuanceHash(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                                               @PathVariable("hash") String issuanceHash
+                                                               @RequestParam("address") String address,
+                                                               @RequestParam("hash") String issuanceHash
     ) {
-        RegistryDocumentByHashDto dto = this.registryService.getRegistryDocumentByHash(userDetails, issuanceHash);
+        RegistryDocumentByHashDto dto = this.registryService.getRegistryDocumentByHash(userDetails, address, issuanceHash);
         return ResponseEntity.ok().body(Response.success(dto));
     }
 }

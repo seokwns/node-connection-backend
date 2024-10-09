@@ -1,8 +1,6 @@
 package node.connection.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,21 +50,33 @@ public class Court {
         this.updatedAt = updatedAt;
     }
 
+    @PrePersist
+    protected void onCreated() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected  void onUpdated() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public static Court of(CourtCreateRequest request) {
         CourtKey courtKey = CourtKey.builder()
-                .court(request.getCourt())
-                .support(request.getSupport())
-                .office(request.getOffice())
+                .court(request.court())
+                .support(request.support())
+                .office(request.office())
                 .build();
 
         String registerCode = Hash.generate();
 
         return Court.builder()
                 .key(courtKey)
-                .channelName(request.getChannelName())
-                .phoneNumber(request.getPhoneNumber())
-                .address(request.getAddress())
-                .faxNumber(request.getFaxNumber())
+                .channelName(request.channelName())
+                .phoneNumber(request.phoneNumber())
+                .address(request.address())
+                .faxNumber(request.faxNumber())
                 .registerCode(registerCode)
                 .build();
     }
