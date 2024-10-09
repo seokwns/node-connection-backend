@@ -201,6 +201,7 @@ public class UserService {
                 .map(history -> new IssuanceHistoryDto(
                         history.getIssuanceHash(),
                         history.getAddress(),
+                        history.getDetailAddress(),
                         history.getCreatedAt(),
                         history.getExpiredAt()
                 ))
