@@ -134,7 +134,7 @@ function config_org_env() {
                 var_value=${BASH_REMATCH[2]}
                 echo "export $var_name=$var_value"
             fi
-        done < <(./setOrgEnv.sh Registry)
+        done < <(bash setOrgEnv.sh Registry)
 
         # while IFS= read -r line; do
         #     if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
@@ -262,7 +262,7 @@ function export_config() {
     # Fabric Channel Information
     echo '' >> hyperledger.config.sh
     echo '# Fabric Channel Information' >> hyperledger.config.sh
-    echo 'CHANNEL_NAME=node-connection-default-channel' >> hyperledger.config.sh
+    echo 'CHANNEL_NAME=busan-headquarters-office' >> hyperledger.config.sh
     echo 'export CHANNEL_NAME' >> hyperledger.config.sh
 
     echo '' >> hyperledger.config.sh
@@ -392,7 +392,7 @@ function start_application() {
     config_org_env
 
     echo -e "${YELLOW}Creating default channel...${NC}"
-    ./network/node-connection-network/network.sh createChannel -c node-connection-default-channel
+    ./network/node-connection-network/network.sh createChannel -c busan-headquarters-office
 
     echo -e "${YELLOW}Exporting Hyperledger network config...${NC}"
     export_config
