@@ -126,10 +126,12 @@ func (s *SmartContract) Issuance(ctx contractapi.TransactionContextInterface, is
 	*/
 
 	// 1. 요청자 정보 PDC 저장
-	invokerID, err := ctx.GetClientIdentity().GetID()
+	cert, err := ctx.GetClientIdentity().GetX509Certificate()
 	if err != nil {
 		return "", fmt.Errorf("failed to get invoker ID: %v", err)
 	}
+
+	invokerID := cert.Subject.CommonName
 
 	if issuerData.ID != invokerID {
 		return "", fmt.Errorf("the invoker ID %s does not match the issuer ID %s", invokerID, issuerData.ID)
