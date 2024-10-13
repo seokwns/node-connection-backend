@@ -17,7 +17,7 @@ public class Jurisdiction {
     @Id
     private JurisdictionKey key;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Court court;
 
     @Column(nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
