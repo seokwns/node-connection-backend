@@ -168,14 +168,16 @@ func (s *SmartContract) Issuance(ctx contractapi.TransactionContextInterface, is
 
 	// 3-2. 발급자 이름 마스킹
 	var issuerName string
-	if len(issuerData.Name) == 2 {
-		issuerName = string(issuerData.Name[0]) + "*"
-	} else if len(issuerData.Name) > 2 {
-		issuerName = string(issuerData.Name[0]);
-		for i := 0; i < len(issuerData.Name) - 2; i++ {
+	issuerRunes := []rune(issuerData.Name)
+
+	if len(issuerRunes) == 2 {
+		issuerName = string(issuerRunes[0]) + "*"
+	} else if len(issuerRunes) > 2 {
+		issuerName = string(issuerRunes[0])
+		for i := 0; i < len(issuerRunes) - 2; i++ {
 			issuerName += "*"
 		}
-		issuerName += string(issuerData.Name[len(issuerData.Name) - 1])
+		issuerName += string(issuerRunes[len(issuerRunes) - 1])
 	}
 
 	// 3-3. 발급 내역 저장
