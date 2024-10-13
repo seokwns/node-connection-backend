@@ -266,4 +266,25 @@ public class CourtService {
 
         return connector;
     }
+
+    public IssuerData getIssuerDataByHash(CustomUserDetails userDetails, String hash) {
+        this.accessControl.hasRegistryRole(userDetails);
+
+        UserAccount userAccount = userDetails.getUserAccount();
+        String id = userAccount.getFabricId();
+        Court court = userAccount.getCourt();
+        FabricConnector connector = this.fabricService.getConnectorByIdAndChannel(id, court.getChannelName());
+        connector.setChaincode(FabricConfig.ISSUANCE_CHAIN_CODE, this.fabricConfig.getIssuanceChainCodeVersion());
+
+        List<String> params = List.of(hash);
+        FabricProposalResponse response = connector.query("GetIssuerDataByIssuanceHash", params);
+
+        if (!response.getSuccess()) {
+            throw new ServerException(ExceptionStatus.FABRIC_QUERY_ERROR);
+        }
+
+        String payload = response.getPayload();
+
+        return this.objectMapper.readValue(payload, IssuerData.class);
+    }
 }

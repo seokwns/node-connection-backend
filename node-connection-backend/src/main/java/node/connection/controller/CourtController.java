@@ -2,9 +2,11 @@ package node.connection.controller;
 
 import node.connection._core.response.Response;
 import node.connection._core.security.CustomUserDetails;
+import node.connection.data.IssuerData;
 import node.connection.dto.registry.*;
 import node.connection.service.CourtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -79,5 +81,13 @@ public class CourtController {
     ) {
         this.courtService.addSecondSectionEntry(userDetails, documentId, data);
         return ResponseEntity.ok().body(Response.success(null));
+    }
+
+    @GetMapping("/issuer")
+    public ResponseEntity<?> getIssuerDataByHash(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                                 @RequestParam("hash") String hash
+    ) {
+        IssuerData issuerData = this.courtService.getIssuerDataByHash(userDetails, hash);
+        return ResponseEntity.ok().body(Response.success(issuerData));
     }
 }
