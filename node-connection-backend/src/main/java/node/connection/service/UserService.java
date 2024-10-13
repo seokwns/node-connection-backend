@@ -92,13 +92,14 @@ public class UserService {
         UserAccount userAccount = userDetails.getUserAccount();
         String id = userAccount.getFabricId();
         String msp = userAccount.getMspId();
+        Court court = null;
 
         if (this.userAccountRepository.existsByFabricId(id)) {
             throw new BadRequestException(ExceptionStatus.ALREADY_REGISTERED);
         }
 
         if (joinDTO.courtCode() != null) {
-            this.courtRepository.findByRegisterCode(joinDTO.courtCode())
+            court = this.courtRepository.findByRegisterCode(joinDTO.courtCode())
                     .orElseThrow(() -> new BadRequestException(ExceptionStatus.INVALID_COURT_CODE));
         }
 
@@ -119,6 +120,7 @@ public class UserService {
         userAccount.setUserName(joinDTO.username());
         userAccount.setPhoneNumber(joinDTO.phoneNumber());
         userAccount.setEmail(joinDTO.email());
+        userAccount.setCourt(court);
 
         this.userAccountRepository.save(userAccount);
     }
