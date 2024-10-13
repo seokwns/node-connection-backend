@@ -6,6 +6,7 @@ import node.connection._core.exception.ExceptionStatus;
 import node.connection._core.exception.client.BadRequestException;
 import node.connection._core.exception.server.ServerException;
 import node.connection._core.security.CustomUserDetails;
+import node.connection._core.utils.AccessControl;
 import node.connection._core.utils.Mapper;
 import node.connection.data.IssuanceData;
 import node.connection.dto.registry.RegistryDocumentDto;
@@ -29,6 +30,8 @@ public class RegistryService {
 
     private final JurisdictionRepository jurisdictionRepository;
 
+    private final AccessControl accessControl;
+
     private final FabricConfig fabricConfig;
 
     private final Mapper objectMapper;
@@ -36,16 +39,20 @@ public class RegistryService {
 
     public RegistryService(@Autowired FabricService fabricService,
                            @Autowired JurisdictionRepository jurisdictionRepository,
+                           @Autowired AccessControl accessControl,
                            @Autowired FabricConfig fabricConfig,
                            @Autowired Mapper objectMapper
     ) {
         this.fabricService = fabricService;
         this.jurisdictionRepository = jurisdictionRepository;
+        this.accessControl = accessControl;
         this.fabricConfig = fabricConfig;
         this.objectMapper = objectMapper;
     }
 
     public List<RegistryDocumentDto> getRegistryDocumentByAddress(CustomUserDetails userDetails, String address, String detailAddress) {
+        this.accessControl.hasMemberRole(userDetails);
+
         Court court = this.jurisdictionRepository.findCourtByAddress(address)
                 .orElseThrow(() -> new BadRequestException(ExceptionStatus.NOT_SUPPORT_LOCATION));
 
@@ -64,6 +71,8 @@ public class RegistryService {
     }
 
     public RegistryDocumentByHashDto getRegistryDocumentByHash(CustomUserDetails userDetails, String address, String hash) {
+        this.accessControl.hasMemberRole(userDetails);
+
         UserAccount userAccount = userDetails.getUserAccount();
 
         Court court = this.jurisdictionRepository.findCourtByAddress(address)

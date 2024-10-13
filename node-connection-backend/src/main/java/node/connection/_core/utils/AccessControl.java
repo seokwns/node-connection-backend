@@ -30,6 +30,13 @@ public class AccessControl {
         if (!granted) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);
     }
 
+    public void hasMemberRole(CustomUserDetails userDetails) {
+        boolean REGISTRY_GRANTED = this.isRoleGranted(userDetails, Role.REGISTRY);
+        boolean VIEWER_GRANTED = this.isRoleGranted(userDetails, Role.VIEWER);
+
+        if (!REGISTRY_GRANTED && !VIEWER_GRANTED) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);
+    }
+
     public void hasAnonymousRole(CustomUserDetails userDetails) {
         boolean granted = this.isRoleGranted(userDetails, Role.ANONYMOUS);
         if (!granted) throw new ForbiddenException(ExceptionStatus.FORBIDDEN);

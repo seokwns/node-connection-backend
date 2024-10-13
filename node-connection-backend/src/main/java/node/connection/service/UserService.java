@@ -126,6 +126,8 @@ public class UserService {
     }
 
     public void login(CustomUserDetails userDetails) {
+        this.accessControl.hasAnonymousRole(userDetails);
+
         UserAccount userAccount = userDetails.getUserAccount();
         String id = userAccount.getFabricId();
 
@@ -141,6 +143,8 @@ public class UserService {
 
     @Transactional
     public String issuance(CustomUserDetails userDetails, IssuanceRequest request) {
+        this.accessControl.hasMemberRole(userDetails);
+
         UserAccount userAccount = userDetails.getUserAccount();
         String id = userAccount.getFabricId();
 
@@ -197,6 +201,8 @@ public class UserService {
     }
 
     public List<IssuanceHistoryDto> getIssuanceHistories(CustomUserDetails userDetails) {
+        this.accessControl.hasMemberRole(userDetails);
+
         UserAccount userAccount = userDetails.getUserAccount();
         List<IssuanceHistory> histories = this.issuanceHistoryRepository.findAllByUserAccount(userAccount);
         return histories.stream()
