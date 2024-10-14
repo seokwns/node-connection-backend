@@ -102,6 +102,15 @@ func generateDocumentID(payload string) string {
 
 // 등기부등본 생성
 func (s *SmartContract) CreateRegistryDocument(ctx contractapi.TransactionContextInterface, document RegistryDocument) (string, error) {
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return "", fmt.Errorf("failed to get MSPID: %v", err)
+	}
+
+	if mspid != "RegistryMSP" {
+		return "", fmt.Errorf("access denied: only RegistryMSP can read the data")
+	}
+
 	documentJSON, err := json.Marshal(document)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal document: %v", err)
