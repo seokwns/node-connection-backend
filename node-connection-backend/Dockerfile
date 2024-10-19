@@ -2,10 +2,9 @@ FROM gradle:8.8-jdk17 AS build
 WORKDIR /app
 
 COPY build.gradle settings.gradle ./
+COPY src ./src
 
 RUN gradle build --no-daemon --parallel --stacktrace || return 0
-
-COPY src ./src
 
 RUN gradle bootJar --no-daemon --parallel --stacktrace
 
