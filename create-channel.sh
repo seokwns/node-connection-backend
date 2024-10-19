@@ -6,7 +6,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-CHANNEL_NAME=""
+CHANNEL_NAME=busan-headquarters-office
 REGISTRY_CHAINCODE_VERSION=1.0.4
 ISSUANCE_CHAINCODE_VERSION=1.0.1
 
@@ -30,11 +30,6 @@ while [[ "$#" -gt 0 ]]; do
             ;;
     esac
 done
-
-if [[ -z "$CHANNEL_NAME" ]]; then
-    echo -e "${RED}Channel name is required${NC}"
-    exit 1
-fi
 
 echo -e "${BLUE}Create new channel ${CHANNEL_NAME}${NC}"
 
