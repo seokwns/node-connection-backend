@@ -1,7 +1,16 @@
-FROM openjdk:17
+FROM eclipse-temurin:17-jdk-alpine AS builder
 
-ARG JAR_FILE=/build/libs/*.jar
+WORKDIR application
+ARG JAR_FILE=build/libs/*.jar
+COPY ${JAR_FILE} application.jar
+RUN java -Djarmode=layertools -jar application.jar extract
 
-COPY ${JAR_FILE} app.jar
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR application
+ENV spring.profiles.active production
+COPY --from=builder application/dependencies ./
+COPY --from=builder application/spring-boot-loader ./
+COPY --from=builder application/snapshot-dependencies ./
+COPY --from=builder application/application ./
 
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
